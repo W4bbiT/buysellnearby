@@ -11,7 +11,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^17.0.3",
-    "@angular/cdk": "^16.0.3",
+    "@angular/cdk": "^17.0.1",
     "@angular/common": "^17.0.3",
     "@angular/compiler": "^17.0.3",
     "@angular/core": "^17.0.3",
@@ -20,22 +20,22 @@
     "@angular/platform-browser-dynamic": "^17.0.3",
     "@angular/router": "^17.0.3",
     "@egjs/flicking-plugins": "^4.7.1",
-    "@egjs/ngx-flicking": "^4.11.0",
+    "@egjs/ngx-flicking": "^4.11.1",
     "moment": "^2.29.4",
-    "rxjs": "~7.5.0",
-    "tslib": "^2.3.0",
+    "rxjs": "~7.8.1",
+    "tslib": "^2.6.2",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^17.0.1",
+    "@angular-devkit/build-angular": "^16.2.10",
     "@angular/cli": "^17.0.1",
     "@angular/compiler-cli": "^17.0.3",
-    "@types/jasmine": "~4.0.0",
-    "autoprefixer": "^10.4.14",
+    "@types/jasmine": "~5.1.2",
+    "autoprefixer": "^10.4.16",
     "css-loader": "^6.8.1",
-    "postcss": "^8.4.18",
+    "postcss": "^8.4.31",
     "style-loader": "^3.3.3",
-    "tailwindcss": "^3.3.0",
+    "tailwindcss": "^3.3.5",
     "typescript": "~5.2.2"
   }
 }
