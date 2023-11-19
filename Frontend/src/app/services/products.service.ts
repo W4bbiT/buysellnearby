@@ -4,8 +4,8 @@ import { Product } from '../models/productModel'
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Review } from '../models/reviewModel';
 
-const AUTH_API = `https://azar-backend.onrender.com/api`
-
+// const AUTH_API = `https://azar-backend.onrender.com/api`
+const AUTH_API = `http://localhost:3000/api`
 const httpOptions = {
   headers: new HttpHeaders({
     'Content-Type': 'application/json',
