@@ -1,0 +1,32 @@
+.dropDownCart {
+            -webkit-animation-name: cart-animation;
+                    animation-name: cart-animation;
+            -webkit-animation-duration: 300ms;
+                    animation-duration: 300ms;
+            -webkit-animation-timing-function: ease;
+                    animation-timing-function: ease;
+}
+
+@-webkit-keyframes cart-animation {
+    from {
+        transform: scaleX(0);
+    }
+    80%{
+        transform: scaleX(1.1);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes cart-animation {
+    from {
+        transform: scaleX(0);
+    }
+    80%{
+        transform: scaleX(1.1);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}

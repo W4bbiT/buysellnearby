@@ -1,0 +1,87 @@
+<div class="shadow-reddish my-5 rounded-3xl text-whiteish">
+    <div *ngIf="product">
+        <div class="md:flex">
+            <div>
+                <ngx-flicking [options]="{ circular: true ,panelsPerView: 1 }" [plugins]="plugins" class="h-96 w-96">
+                    <div flicking-panel class="card-panel" *ngFor="let image of product?.productImage">
+                        <img src="{{image}}" class="h-96 w-96 object-contain" />
+                    </div>
+                    <span in-viewport class="flicking-arrow-prev"></span>
+                    <span in-viewport class="flicking-arrow-next"></span>
+                </ngx-flicking>
+            </div>
+            <div class="px-5">
+                <h2 class="text-2xl font-bold mb-4">{{ product?.productName}}</h2>
+                <p class="mb-4">Description: {{ product?.description }}</p>
+                <p class="text-lg font-bold mb-2">Price: {{ product?.price | currency }}</p>
+                <p class="mb-4">Category: {{ product?.category }}</p>
+                <p class="mb-4">In Stock: {{ product?.inStock }}</p>
+                <div class="float-right">
+                    <button (click)="addToCart(product?._id)"
+                        class="shadow-sm shadow-blackish font-bold py-2 px-4 rounded-full active:shadow:inner active:shadow:blackish">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="px-5">
+            <h3 class="text-xl font-bold">Details</h3>
+            <p class="mb-4">Size: {{ product?.details?.size }}</p>
+            <p class="mb-4">Color: {{ product?.details?.color }}</p>
+            <p class="mb-4">Info: {{ product?.details?.info }}</p>
+        </div>
+    </div>
+    <div class="shadow-sm shadow-reddish p-1 rounded-3xl" *ngIf="reviews">
+        <div class="flex justify-between m-5">
+            <h3 class="text-lg font-semibold">Product Reviews:</h3>
+            <div class="text-right justify-center">
+                <div [style.width.%]="avgRate">
+                    <h1 class="text-3xl text-yellow-500 text-opacity-30 bg-yellow-500 bg-cover bg-clip-text">★★★★★</h1>
+                </div>
+                <div>
+                    <span class="text-sm">from {{reviews?.totalCount}} reviews</span>
+                </div>
+            </div>
+        </div>
+        <div *ngFor="let review of reviews.reviews" class="border-t-2 rounded-3xl p-4">
+            <div class="flex justify-between">
+                <div class="flex items-center mb-2">
+                    <img class="w-10 h-10 rounded-full mr-4" [src]="review?.user?.profileImage" alt="User Profile Image">
+                    <div>
+                        <p class="font-bold">{{ review?.user?.fName }}</p>
+                        <p>State: {{ review?.user?.address?.state }}</p>
+                    </div>
+                </div>
+                <div>
+                    <p>Rating: <span class="text-yellow-500">{{ getStarRating(review.rating) }}</span></p>
+                </div>
+                <div>
+                    <p class="text-sm">{{ review?.reviewDate | date }}</p>
+                </div>
+            </div>
+            <p>{{ review?.review }}</p>
+        </div>
+    </div>
+    <div *ngIf="!reviews" class="flex justify-center">
+        <h3 class="p-2 shadow-sm shadow-reddish rounded-full">No reviews yet</h3>
+    </div>
+    <div class="flex justify-center text-reddish items-center mb-5" *ngIf="reviews?.totalPages > 1">
+        <!-- Previous Button -->
+        <button class="p-1 shadow-sm shadow-reddish rounded-full mr-2 active:shadow-inner active:shadow-reddish"
+            (click)="previousPage()" [disabled]="page === 1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-6 h-6 stroke-reddish">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+        <span> Page {{ page }} of {{ reviews.totalPages }} </span>
+        <!-- Next Button -->
+        <button class="p-1 shadow-sm shadow-reddish rounded-full ml-2 active:shadow-inner active:shadow-reddish"
+            (click)="nextPage()" [disabled]="page === reviews.totalPages">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-6 h-6 stroke-reddish">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,34 @@
+<div class="contents" *ngIf="product">
+    <h2>Edit Product</h2>
+    <form class="grid grid-cols-2" [formGroup]="productForm">
+            <label>Product Name</label>
+            <input type="text" formControlName="productName" placeholder="{{product.productName}}">
+
+            <label>Product Category</label>
+            <input type="text" formControlName="category" placeholder="{{product.category}}">
+
+            <label>Price</label>
+            <input type="number" formControlName="price" placeholder="{{product.price}}">
+
+            <label>Discount</label>
+            <input type="number" formControlName="discount" placeholder="{{product.discount}}">
+
+            <label>Description</label>
+            <input type="text" formControlName="description" placeholder="{{product.description}}">
+
+            <label>Product Image URL</label>
+            <input type="text" formControlName="productImage" placeholder="{{product.productImage}}">
+
+            <label>How many in stock?</label>
+            <input type="number" formControlName="inStock" placeholder="{{product.inStock}}">
+
+            <label>Details</label>
+            <input type="text" formControlName="details" placeholder="{{product.details}}">
+
+            <label>Top Product</label>
+            <input type="checkbox" formControlName="featureProduct" placeholder="{{product.featureProduct}}">
+
+
+            <button (click)="editProduct()">Edit Product</button>
+    </form>
+</div>

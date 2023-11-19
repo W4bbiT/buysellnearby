@@ -1,0 +1,34 @@
+<div class="content-box text-whiteish">
+        <h2>Create Product Listing</h2>
+
+        <form class="example-form" [formGroup]="productForm">
+                <label>Product Name</label>
+                <input class="text-black"  type="text" formControlName="productName" placeholder="Enter Product Name">
+
+                <label>Product Category</label>
+                <input class="text-black" type="text" formControlName="category" placeholder="Enter Product Category">
+
+                <label>Price</label>
+                <input class="text-black" type="number" formControlName="price" placeholder="Enter Product Price">
+
+                <label>Discount</label>
+                <input class="text-black" type="number" formControlName="discount" placeholder="Enter Product Discount">
+
+                <label>Description</label>
+                <input class="text-black" type="text" formControlName="description" placeholder="Enter Product Description">
+
+                <label>Product Image URL</label>
+                <input class="text-black" type="text" formControlName="productImage" placeholder="Enter Product ProductImage">
+
+                <label>How many in stock?</label>
+                <input class="text-black" type="number" formControlName="inStock" placeholder="Enter Product inStock">
+
+                <label>Details</label>
+                <input class="text-black" type="text" formControlName="details" placeholder="Enter Product Ingredient">
+
+                <label>Top Product</label>
+                <input class="text-black" type="checkbox" formControlName="featureProduct">
+
+                <button (click)="addProduct()">Add Product</button>
+        </form>
+</div>

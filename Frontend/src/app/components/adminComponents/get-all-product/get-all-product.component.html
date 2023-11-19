@@ -1,0 +1,46 @@
+<div class="bg-transparent text-blackish" *ngIf="products">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Description</th>
+                <th>ProductImage</th>
+                <th>CreatedOn</th>
+                <th>inStock</th>
+                <th>TopProduct</th>
+                <th>Details</th>
+                <th>Action</th>
+            </tr>
+
+        </thead>
+        <tbody>
+            <tr *ngFor="let product of products">
+                <a routerLink="/products/{{product._id}}">
+                    <td>{{product._id}}</td>
+                </a>
+                <td>{{product.productName}}</td>
+                <td>{{product.category}}</td>
+                <td>{{product.price}}</td>
+                <td>{{product.discount}}</td>
+                <td>{{product.description}}</td>
+                <td>
+                    <img src={{product.productImage}} class="w-20 h-20 object-contain mix-blend-multiply">
+                </td>
+                <td>{{product.createdOn}}</td>
+                <td>{{product.inStock}}</td>
+                <td>{{product.featureProduct}}</td>
+                <td>{{product.details}}</td>
+                <td class="grid">
+                    <button class="border hover:bg-orange-600" routerLink="/products/{{product._id}}/edit">Edit</button>
+                    <button class="border hover:bg-red-600" (click)="deleteProduct(product._id)">Delete</button>
+                    <button class="border hover:bg-green-600" (click)="addToCart(product._id)">Add to Cart</button>
+                </td>
+            </tr>
+            <br>
+        </tbody>
+    </table>
+</div>

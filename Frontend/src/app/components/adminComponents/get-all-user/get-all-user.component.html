@@ -1,0 +1,43 @@
+<div class="w-screen h-screen bg-black" *ngIf="users">
+    <table class="table-auto">
+        <thead class="text-gray-500 font-extrabold border border-gray-500">
+            <tr>
+                <td>ID</td>
+                <td>First Name</td>
+                <td>Last Name</td>
+                <td>Email</td>
+                <td>Password</td>
+                <td>Date of Birth</td>
+                <td>Phone</td>
+                <td>Street Address</td>
+                <td>City</td>
+                <td>State</td>
+                <td>Zipcode</td>
+                <td>Profile Image</td>
+                <td>Action</td>
+            </tr>
+        </thead>
+        <tbody class="text-gray-300 border border-gray-500">
+            <tr *ngFor="let user of users">
+                <a routerLink="/users/{{user._id}}">
+                    <td class="m-1 pt-4" >{{user._id}}</td>  
+                </a>
+                <td>{{user.fName}}</td>
+                <td>{{user.lName}}</td>
+                <td>{{user.email}}</td>
+                <td>{{user.password}}</td>
+                <td>{{user.dob}}</td>
+                <td>{{user.phone}}</td>
+                <td>{{user.address.streetAddress}}</td>
+                <td>{{user.address.city}}</td>
+                <td>{{user.address.state}}</td>
+                <td>{{user.address.zipcode}}</td>
+                <td>{{user.profileImage}}</td>
+                <td>
+                    <button class="border-blue-600 m-1 p-2 border rounded-xl" routerLink="/users/{{user._id}}/edit">Edit</button>
+                    <button class="border-red-600 m-1 p-2 border rounded-xl " (click)="deleteUserButton(user._id)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

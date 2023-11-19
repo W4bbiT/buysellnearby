@@ -1,0 +1,48 @@
+
+div{
+    color: #FCF6F5FF
+}
+.sidebar {
+    width: 20vw;
+    opacity: 0.7;
+}
+  
+.selected {
+    color: #990011FF;
+    margin: 2px;
+    text-transform: uppercase;
+    opacity: 1;
+    -webkit-animation: category-animation 300ms ease alternate;
+    animation: category-animation 300ms ease;
+}
+
+
+@-webkit-keyframes category-animation {
+    0% {
+        transform: scale(1);
+
+    }
+    80%{
+        transform: scale(1.1);
+    }
+
+    100% {
+        text-transform: uppercase;
+        transform: scale(1);
+    }
+}
+
+@keyframes category-animation {
+    0% {
+        transform: scale(1);
+
+    }
+    80%{
+        transform: scale(1.1);
+    }
+
+    100% {
+        text-transform: uppercase;
+        transform: scale(1);
+    }
+}

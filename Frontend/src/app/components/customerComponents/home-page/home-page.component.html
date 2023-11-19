@@ -1,0 +1,65 @@
+<app-feature-product class="w-screen"></app-feature-product>
+
+<div class="flex">
+
+  <div class="md:w-60">
+    <app-side-bar class="sidebar" [selectedCategory]="selectedCategory" (categoryChange)="onCategory($event)">
+    </app-side-bar>
+  </div>
+  <div class="p-5">
+    <div class="flex flex-wrap" *ngIf="products">
+      <div class="m-5" *ngFor="let product of products">
+        <div class="card w-64 h-fit p-2 rounded-3xl glass">
+          <div class="card-img rounded-3xl">
+            <a [routerLink]="['/products', product._id]">
+              <img class="rounded-3xl w-64 h-40 object-cover" [src]="product.productImage[0]" alt="Product Image">
+            </a>
+          </div>
+          <h2 class="text-xl font-semibold mt-5">{{product.productName}}</h2>
+          <p class="h-7 overflow-hidden text-ellipsis">{{product.description}}</p>
+          <div class="text-right">
+            <p *ngIf="product.inStock < 20 && product.inStock > 0" class="text-red-600">Only {{product.inStock}} in
+              stock
+            </p>
+            <p *ngIf="product.inStock < 1" class="text-red-500">Out of stock</p>
+          </div>
+          <div class="card-footer">
+            <p class="">{{product.price | currency}}</p>
+            <button class="card-button shadow-sm shadow-reddish p-2 active:shadow-inner"
+              (click)="addToCart(product._id)">
+              <svg fill="#990011FF" width="64px" height="64px" viewBox="-3.2 -3.2 38.40 38.40" version="1.1"
+                xmlns="http://www.w3.org/2000/svg" stroke="#990011FF" stroke-width="0.00032">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                  <path
+                    d="M16 0c-8.836 0-16 7.163-16 16s7.163 16 16 16c8.837 0 16-7.163 16-16s-7.163-16-16-16zM16 30.032c-7.72 0-14-6.312-14-14.032s6.28-14 14-14 14 6.28 14 14-6.28 14.032-14 14.032zM23 15h-6v-6c0-0.552-0.448-1-1-1s-1 0.448-1 1v6h-6c-0.552 0-1 0.448-1 1s0.448 1 1 1h6v6c0 0.552 0.448 1 1 1s1-0.448 1-1v-6h6c0.552 0 1-0.448 1-1s-0.448-1-1-1z">
+                  </path>
+                </g>
+              </svg> </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-center text-white items-center mb-5" *ngIf="totalPages > 1">
+      <!-- Previous Button -->
+      <button class="p-1 shadow-sm shadow-reddish rounded-full mr-2 active:shadow-inner active:shadow-reddish"
+        (click)="previousPage()" [disabled]="currentPage === 1">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <span> Page {{ currentPage }} of {{ totalPages }} </span>
+      <!-- Next Button -->
+      <button class="p-1 shadow-sm shadow-reddish rounded-full ml-2 active:shadow-inner active:shadow-reddish"
+        (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+<app-top-product></app-top-product>

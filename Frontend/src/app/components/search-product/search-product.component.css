@@ -1,0 +1,58 @@
+.dropDownSearch {
+    -webkit-animation-name: search;
+            animation-name: search;
+    -webkit-animation-duration: 200ms;
+            animation-duration: 200ms;
+    -webkit-animation-timing-function: ease-out;
+            animation-timing-function: ease-out;
+            background: rgba(50, 50, 50, 0.5);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+}
+
+/* .container-input {
+    position: relative;
+  }
+  
+  .input {
+    width: 200px;
+    padding: 10px 0px 10px 10px;
+    border-radius: 9999px;
+    transition: all .2s ease-in-out;
+  }
+  
+  .container-input svg {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translate(0, -50%);
+  }
+
+  .input:focus {
+    width: 300px;
+  } */
+
+@-webkit-keyframes search {
+    from {
+        transform: scaleY(0);
+    }
+    80%{
+        transform: scaleY(1.1);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}
+
+
+@keyframes search {
+    from {
+        transform: scaleY(0);
+    }
+    80%{
+        transform: scaleY(1.1);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}

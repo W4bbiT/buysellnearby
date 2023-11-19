@@ -1,0 +1,26 @@
+<div class="m-3 justify-center items-center">
+    <form [formGroup]="userForm" class="2xl:flex text-whiteish">
+        <div class="2xl:flex">
+            <label class="block p-2 m-1">Email :</label>
+            <input class="bg-transparent block m-1 p-2 shadow-blackish shadow-inner rounded-full" type="text" formControlName="email"
+                placeholder="Enter email">
+        </div>
+
+        <div class="2xl:flex">
+            <label class="block p-2 m-1">Password :</label>
+            <input class="bg-transparent block m-1 p-2 shadow-blackish shadow-inner rounded-full" type="text" formControlName="password"
+                placeholder="Enter password">
+        </div>
+
+        <div class="2xl:flex">
+            <label class="block p-2 m-1">Confirm Password :</label>
+            <input class="bg-transparent block m-1 p-2 shadow-blackish shadow-inner rounded-full" type="text" formControlName="confirmPassword"
+                placeholder="Enter password">
+        </div>
+
+        <div class="2xl:block p-2 text-right">
+            <button class="shadow-blackish shadow-sm rounded-full p-2 w-20 active:shadow-inner active:shadow-blackish" (click)="onSubmit()">Register</button>
+        </div>
+
+    </form>
+</div>

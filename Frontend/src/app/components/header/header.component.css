@@ -1,0 +1,13 @@
+.glass{
+    background: rgba(50, 50, 50, 0.5);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+img{
+    top: 10%;
+    width: 50px;
+    left: 10%;
+    mix-blend-mode:inherit;
+    border-radius: 50%;
+}

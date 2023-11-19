@@ -1,0 +1,16 @@
+<header class="w-screen glass sticky z-30 flex justify-around px-10 items-center mb-1 inset-x-0 top-0 p-2">
+    <div class="flex items-center">
+      <a routerLink="/" class="">
+        <img src="assets/Images/logo.JPEG" class="">
+      </a>
+      <app-login-menu *ngIf="!loggedIn"></app-login-menu>
+    </div>
+    <div class="flex items-center" *ngIf="loggedIn">
+      <app-profile-menu></app-profile-menu>
+      <app-cart-menu quantity="{{totalQuantity}}"></app-cart-menu>
+    </div>
+    <div>
+      <app-search-product></app-search-product>
+    </div>
+</header>
+
