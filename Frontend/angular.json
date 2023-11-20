@@ -17,7 +17,7 @@
             "extractLicenses": true,  
             "namedChunks": true,  
             "aot": true,
-            "outputPath": "dist/myshop",
+            "outputPath": "dist/bsn",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -72,11 +72,11 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "myshop:build:production",
+              "buildTarget": "bsn:build:production",
               "proxyConfig": "proxy.config.json" 
             },
             "development": {
-              "browserTarget": "myshop:build:development",
+              "buildTarget": "bsn:build:development",
               "proxyConfig": "proxy.config.json" 
 
             }
@@ -86,7 +86,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "myshop:build"
+            "buildTarget": "bsn:build"
           }
         },
         "test": {

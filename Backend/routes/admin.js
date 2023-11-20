@@ -5,8 +5,6 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/products')
 const passport = require('passport')
-const Order = require('../models/orders')
-
 
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
@@ -47,6 +45,7 @@ router.get('/gau', passport.authenticate('jwt', { session: false }), async (req,
         res.status(500).json({ message: err.message });
     }
 });
+
 //deleting one
 router.delete('/du', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -61,7 +60,6 @@ router.delete('/du', passport.authenticate('jwt', { session: false }), async (re
         res.status(500).json({ message: err.message })
     }
 })
-
 
 //creating a product listing
 router.post('/ap', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -89,6 +87,7 @@ router.post('/ap', passport.authenticate('jwt', { session: false }), async (req,
         res.status(400).json({ message: err.message })
     }
 })
+
 //updating a product
 router.patch('/up/:id', passport.authenticate('jwt', { session: false }), getProduct, async (req, res) => {
     if (req.body.productName != null) {
@@ -131,6 +130,7 @@ router.patch('/up/:id', passport.authenticate('jwt', { session: false }), getPro
         })
     }
 })
+
 //deleting a product
 router.delete('/dp/:id', passport.authenticate('jwt', { session: false }), getProduct, async (req, res) => {
     try {
@@ -147,75 +147,6 @@ router.delete('/dp/:id', passport.authenticate('jwt', { session: false }), getPr
 
 })
 
-// Get all orders
-router.get('/orders', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        if (req.user.role !== admin) {
-            res.json({ message: 'You are not authorized to access this page!' });
-        } else {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-
-            const orders = await Order.find()
-                .skip((page - 1) * limit)
-                .limit(limit)
-                .exec();
-
-            res.json(orders);
-        }
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-//updating an order
-router.patch('/up/:oId', passport.authenticate('jwt', { session: false }), getOrder, async (req, res) => {
-    if (req.body.trackingInfo != null || req.body.verified != null) {
-        try {
-            if (req.user.role != admin) {
-                res.send.json({ message: 'you are not authorized to access this page!' })
-            } else {
-                const updatedOrder = await Order.updateOne({
-                    userId: req.user._id,
-                    _id: res.order._id
-                },
-                    {
-                        $set: {
-                            verified: req.body.verified,
-                            trackingInfo: req.body.trackingInfo
-                        }
-                    })
-                res.json(updatedOrder)
-            }
-        } catch (err) {
-            res.status(400).json({
-                message: err.message
-            })
-        }
-    }
-})
-
-//deleting an order
-router.delete('/do/:oId', passport.authenticate('jwt', { session: false }), getOrder, async (req, res) => {
-    try {
-        if (req.user.role != admin) {
-            res.send.json({ message: 'you are not authorized to access this page!' })
-        } else {
-            const deletedOrder = await Order.deleteOne({
-                userId: req.user._id,
-                _id: res.order._id
-            })
-            res.json({ message: "Order has been cancelled" })
-        }
-    } catch (err) {
-        res.status(400).json({
-            message: err.message
-        })
-    }
-})
-
-
-
 async function getProduct(req, res, next) {
     let product
     try {
@@ -231,19 +162,5 @@ async function getProduct(req, res, next) {
     next()
 }
 
-async function getOrder(req, res, next) {
-    let order
-    try {
-        order = await Order.findById(req.params.oId)
-        if (order == null) {
-            return res.status(404).json({ message: 'Couldn\'t find order' })
-        }
-    } catch (err) {
-        return res.status(500).json({ message: err.message })
-    }
-    res.order = order
-
-    next()
-}
 
 module.exports = router
