@@ -29,13 +29,4 @@ app.use('/api/user', usersRouter)
 const productsRouter = require('./routes/products')
 app.use('/api/product', productsRouter)
 
-const cartRouter = require('./routes/cart')
-app.use('/api/user', cartRouter)
-
-const orderRouter = require('./routes/orders')
-app.use('/api/user', orderRouter)
-
-const reviewRouter = require('./routes/review')
-app.use('/api/user/review', reviewRouter)
-
 app.listen(process.env.PORT, () => console.log('server started'))

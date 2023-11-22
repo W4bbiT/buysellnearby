@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose'); // Import the mongoose module
 const router = express.Router();
 const Product = require('../models/products');
-const Review = require('../models/reviews'); // Import the Review model
 const { validationResult } = require('express-validator');
 
 // Get all products with pagination
@@ -21,65 +20,6 @@ router.get('/', async (req, res) => {
             totalCount,
             totalPages
         });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-// Get top products
-router.get('/top-products', async (req, res) => {
-    try {
-        const topRatedProducts = await Product.aggregate([
-            {
-                $lookup: {
-                    from: 'reviews',
-                    localField: 'reviews',
-                    foreignField: '_id',
-                    as: 'reviewDetails'
-                }
-            },
-            {
-                $unwind: '$reviewDetails' // Unwind the reviewDetails array
-            },
-            {
-                $group: {
-                    _id: '$_id',
-                    productName: { $first: '$productName' },
-                    category: { $first: '$category' },
-                    price: { $first: '$price' },
-                    discount: { $first: '$discount' },
-                    description: { $first: '$description' },
-                    productImage: { $first: '$productImage' },
-                    createdOn: { $first: '$createdOn' },
-                    inStock: { $first: '$inStock' },
-                    featureProduct: { $first: '$featureProduct' },
-                    details: { $first: '$details' },
-                    averageRating: {
-                        $avg: '$reviewDetails.rating' // Calculate the average rating
-                    }
-                }
-            },
-            {
-                $match: {
-                    averageRating: { $gte: 4.0 }
-                }
-            },
-            {
-                $limit: 10
-            }
-        ]);
-        res.json(topRatedProducts);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-// Get featured products
-router.get('/featured-products', async (req, res) => {
-    try {
-        const featuredProducts = await Product.find({ featureProduct: true })
-            .limit(10); // Adjust the limit as per your requirement
-        res.json(featuredProducts);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

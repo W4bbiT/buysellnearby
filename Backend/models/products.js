@@ -36,11 +36,7 @@ const ProductSchema = new mongoose.Schema({
     size: String,
     color: String,
     info: String,
-  },
-  reviews: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Review'
-  }]
+  }
   
 }, { versionKey: false });
 
