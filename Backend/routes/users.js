@@ -6,7 +6,23 @@ const User = require('../models/users')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 var passport = require('passport')
-
+const multer  = require('multer')
+const storage = multer.diskStorage(
+    {
+        destination: function(req, file, cb){
+            cb(null, './uploads/')
+        },
+        filename: function(req,file,cb){
+            cb(null, file.originalname)
+        }
+    }
+)
+const upload = multer({ storage: storage })
+const errorHandler = (err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal Server Error' });
+  };
+router.use(errorHandler);
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 router.use(passport.initialize())
@@ -91,32 +107,32 @@ router.post('/signin', async (req, res) => {
 })
 
 //updating one
-router.patch('/update-user', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    if (req.body.fName != null) {
+router.patch('/update-user', upload.single('profileImage'), passport.authenticate('jwt', { session: false }), async (req, res) => {
+    if (req.body.fName) {
         req.user.fName = req.body.fName
     }
-    if (req.body.lName != null) {
+    if (req.body.lName) {
         req.user.lName = req.body.lName
     }
-    if (req.body.dob != null) {
-        req.user.dob = req.body.dob
+    if (req.body.dob) {
+        req.user.dob = req.body.dob;
     }
-    if (req.body.address.streetAddress != null) {
+    if (req.body.address.streetAddress) {
         req.user.address.streetAddress = req.body.address.streetAddress
     }
-    if (req.body.address.city != null) {
+    if (req.body.address.city) {
         req.user.address.city = req.body.address.city
     }
-    if (req.body.address.state != null) {
+    if (req.body.address.state) {
         req.user.address.state = req.body.address.state
     }
-    if (req.body.address.zipcode != null) {
+    if (req.body.address.zipcode) {
         req.user.address.zipcode = req.body.address.zipcode
     }
-    if (req.body.phone != null) {
+    if (req.body.phone) {
         req.user.phone = req.body.phone
     }
-    if (req.body.email != null) {
+    if (req.body.email) {
         req.user.email = req.body.email
         emailExist = await User.findOne({
             email: req.body.email
@@ -125,13 +141,13 @@ router.patch('/update-user', passport.authenticate('jwt', { session: false }), a
             res.send('Email already exist')
         }
     }
-    if (req.body.password != null) {
+    if (req.body.password) {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(req.body.password, salt)
         req.user.password = hashedPassword
     }
-    if (req.body.profileImage != null) {
-        req.user.profileImage = req.body.profileImage
+    if (req.file) {
+        req.user.profileImage = req.file.path
     }
 
     try {

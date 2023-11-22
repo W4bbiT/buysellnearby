@@ -13,7 +13,9 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    profileImage: String,
+    profileImage: {
+        type: String,
+    },
     role: {
         type: String,
         default: "Customer"
@@ -25,6 +27,14 @@ const UserSchema = new mongoose.Schema({
         state: String,
         zipcode: String
     },
+    products: [
+        {
+            productId: {
+                type : mongoose.Schema.Types.ObjectId,
+                ref: 'Product'
+            }
+        }
+    ],
     createDate: Date
 
 }, { versionKey: false })
