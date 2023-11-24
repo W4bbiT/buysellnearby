@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Cart } from 'src/app/models/cartModel';
 import { Product } from 'src/app/models/productModel';
 import { User } from 'src/app/models/userModel';
 import { ProductsService } from 'src/app/services/products.service';
@@ -21,7 +20,6 @@ export class GetOneProductComponent implements OnInit {
   page: number = 1;
   limit: number = 10;
   avgRate: number = 0;
-  cart: Cart;
   user: User;
 
   constructor(
@@ -95,17 +93,5 @@ export class GetOneProductComponent implements OnInit {
     const roundedRating = Math.round(rating);
 
     return filledStar.repeat(roundedRating) + emptyStar.repeat(maxRating - roundedRating);
-  }
-
-  addToCart(productId: string) {
-    this.userService.addProductToMyCart(productId, this.cart)
-      .subscribe({
-        next: (res) => {
-          alert("Product added to cart successfully");
-        },
-        error: () => {
-          alert("Product not added to your cart for some reason");
-        }
-      });
   }
 }

@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Cart } from 'src/app/models/cartModel';
 import { Product } from 'src/app/models/productModel';
 import { ProductsService } from 'src/app/services/products.service';
 import { UsersService } from 'src/app/services/users.service';
@@ -11,7 +10,6 @@ import { UsersService } from 'src/app/services/users.service';
 })
 export class HomePageComponent implements OnInit {
   products: Product[];
-  cart: Cart;
   currentPage: number = 1;
   limit: number = 50;
   totalPages: number;
@@ -74,17 +72,5 @@ export class HomePageComponent implements OnInit {
       this.currentPage++;
       this.fetchProducts();
     }
-  }
-
-  addToCart(productId: string) {
-    this.userService.addProductToMyCart(productId, this.cart)
-      .subscribe({
-        next: (res) => {
-          alert("Product added to cart successfully");
-        },
-        error: () => {
-          alert("Product not added to your cart for some reason");
-        }
-      });
   }
 }

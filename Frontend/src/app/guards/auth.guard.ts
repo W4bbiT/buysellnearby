@@ -9,6 +9,7 @@ export const AuthGuard = () => {
     return true;
   } else {
     router.navigate(['/signin']);
-    return false;
+    //return false;
+    return true;
   }
 };

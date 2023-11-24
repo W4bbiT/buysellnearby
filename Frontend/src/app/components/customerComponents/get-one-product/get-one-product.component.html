@@ -16,12 +16,6 @@
                 <p class="text-lg font-bold mb-2">Price: {{ product?.price | currency }}</p>
                 <p class="mb-4">Category: {{ product?.category }}</p>
                 <p class="mb-4">In Stock: {{ product?.inStock }}</p>
-                <div class="float-right">
-                    <button (click)="addToCart(product?._id)"
-                        class="shadow-sm shadow-blackish font-bold py-2 px-4 rounded-full active:shadow:inner active:shadow:blackish">
-                        Add to Cart
-                    </button>
-                </div>
             </div>
         </div>
         <div class="px-5">

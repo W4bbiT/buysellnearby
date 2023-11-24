@@ -3,7 +3,6 @@ const express = require('express')
 const app = express()
 const cors = require('cors');
 const passport = require('passport');
-
 require('./configs/database');
 require('./models/users');
 
@@ -30,6 +29,6 @@ const productsRouter = require('./routes/products')
 app.use('/api/product', productsRouter)
 
 // Serve files from the 'uploads' directory
-app.use('/uploads', express.static('uploads'));
+app.use('/profilePhoto', express.static('uploads'));
 
 app.listen(process.env.PORT, () => console.log('server started'))

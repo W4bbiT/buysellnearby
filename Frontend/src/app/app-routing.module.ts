@@ -3,11 +3,8 @@ import { CreateProductComponent } from './components/adminComponents/create-prod
 import { CreateUserComponent } from './components/customerComponents/create-user/create-user.component';
 import { EditProductComponent } from './components/adminComponents/edit-product/edit-product.component';
 import { EditUserComponent } from './components/customerComponents/edit-user/edit-user.component';
-import { GetAllCartComponent } from './components/customerComponents/get-all-cart/get-all-cart.component';
-import { GetAllOrderComponent } from './components/customerComponents/get-all-order/get-all-order.component';
 import { GetAllProductComponent } from './components/adminComponents/get-all-product/get-all-product.component';
 import { GetAllUserComponent } from './components/adminComponents/get-all-user/get-all-user.component';
-import { GetOneOrderComponent } from './components/customerComponents/get-one-order/get-one-order.component';
 import { GetOneProductComponent } from './components/customerComponents/get-one-product/get-one-product.component';
 import { HomePageComponent } from './components/customerComponents/home-page/home-page.component';
 import { LoginComponent } from './components/customerComponents/login/login.component';
@@ -34,12 +31,6 @@ const routes: Routes = [
   { path: 'products/:pId/edit', component: EditProductComponent, canActivate:[AdminAuthGuard] },
   { path: 'addproduct', component: CreateProductComponent, canActivate:[AdminAuthGuard] },
 
-
-  //orders
-  { path: 'orders', component: GetAllOrderComponent, canActivate:[AuthGuard] },
-  { path: 'orders/:oId', component: GetOneOrderComponent, canActivate:[AuthGuard] },
-  //carts
-  { path: 'all-carts', component: GetAllCartComponent, canActivate:[AuthGuard] },
 ];
 
 @NgModule({
