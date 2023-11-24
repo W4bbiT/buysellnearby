@@ -12,22 +12,28 @@ require('dotenv').config();
  * 
  * DB_STRING=mongodb://<user>:<password>@localhost:27017/database_name
  * DB_STRING_PROD=<your production database string>
- */ 
+ */
 
 const devConnection = process.env.DB_STRING;
 const prodConnection = process.env.DB_STRING_PROD;
 
 // Connect to the correct environment database
 if (process.env.NODE_ENV === 'production') {
-    mongoose.connect(prodConnection);
-
-    mongoose.connection.on('connected', () => {
-        console.log('Database connected');
+    mongoose.connect(prodConnection, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    },).then((res) => {
+        console.log("Database connected");
+    }).catch(error => {
+        console.log(error);
     });
 } else {
-    mongoose.connect(devConnection);
-
-    mongoose.connection.on('connected', () => {
-        console.log('Database connected');
+    mongoose.connect(devConnection, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    },).then((res) => {
+        console.log("Database connected");
+    }).catch(error => {
+        console.log(error);
     });
 }

@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductsService } from 'src/app/services/products.service';
 import { Product } from 'src/app/models/productModel';
-import { UsersService } from 'src/app/services/users.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -17,7 +16,6 @@ export class GetAllProductComponent implements OnInit {
 
   constructor(
     private productService: ProductsService,
-    private userService: UsersService,
     private route: Router,
   ) { }
 
