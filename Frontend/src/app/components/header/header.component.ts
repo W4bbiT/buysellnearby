@@ -8,13 +8,14 @@ import { UsersService } from 'src/app/services/users.service';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
-  title = 'Azar&Co';
+  title = 'Buy Sell Nearby';
   totalQuantity: number = 0;
   loggedIn: boolean
   constructor(
-    private userService: UsersService,
+
     private tokenStorage: TokenStorageService) {}
 
   ngOnInit(): void {
+    this.loggedIn = this.tokenStorage.isLoggedIn()
   }
 }

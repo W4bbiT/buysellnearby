@@ -6,27 +6,34 @@ const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const fs = require('fs');
+const path = require('path')
 const multer = require('multer');
-const path = require('path');
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './profilePhoto/');
+const storage =   multer.diskStorage({
+  destination: function (req, file, callback) {
+    const uploadPath = './uploads/profileImage/';
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    callback(null, uploadPath);
   },
-  filename: function (req, file, cb) {
+  filename: function (req, file, callback) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const fileName = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
+    callback(null, fileName);
   }
 });
 const upload = multer({ storage: storage });
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal Server Error' });
 };
-router.use(errorHandler);
+
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 router.use(passport.initialize());
-
+router.use(errorHandler);
 // Getting the user info
 router.get('/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
@@ -93,7 +100,7 @@ router.post('/signin', async (req, res) => {
       });
 
       console.log("Bearer " + accessToken);
-      
+
       res.status(200).json({
         accessToken: "Bearer " + accessToken,
         username: user.fName,
@@ -150,7 +157,8 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       req.user.password = hashedPassword;
     }
     if (req.file) {
-      req.user.profileImage = req.file.path;
+      // console.log(req.file)
+
     }
 
     const updatedUser = await req.user.save();

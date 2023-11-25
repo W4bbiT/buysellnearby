@@ -49,7 +49,12 @@ export class EditUserComponent implements OnInit {
       profileImage: new FormControl(),
     })
   }
-
+  onFileSelected(event: any) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    this.userForm.patchValue({
+      profileImage: file,
+    });
+  }
   editUser() {
     const updatedUser = {
       ...this.userForm.value,

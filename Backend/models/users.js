@@ -35,7 +35,10 @@ const UserSchema = new mongoose.Schema({
             }
         }
     ],
-    createDate: Date
+    createdOn: {
+        type: Date,
+        default: Date.now
+      },
 
 }, { versionKey: false })
 

@@ -19,19 +19,15 @@ const prodConnection = process.env.DB_STRING_PROD;
 
 // Connect to the correct environment database
 if (process.env.NODE_ENV === 'production') {
-    mongoose.connect(prodConnection, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    },).then((res) => {
+    mongoose.connect(prodConnection)
+    .then((res) => {
         console.log("Database connected");
     }).catch(error => {
         console.log(error);
     });
 } else {
-    mongoose.connect(devConnection, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    },).then((res) => {
+    mongoose.connect(devConnection)
+    .then((res) => {
         console.log("Database connected");
     }).catch(error => {
         console.log(error);

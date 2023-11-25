@@ -2,7 +2,7 @@
 
     <div class="" *ngIf="user">
         <h2 class="m-5 p-3 w-full text-3xl">Edit Profile</h2>
-        <form (ngSubmit)="editUser()" [formGroup]="userForm" class="flex flex-wrap">
+        <form (ngSubmit)="editUser()" [formGroup]="userForm" class="flex flex-wrap" enctype="multipart/form-data">
             <div class="shadow-reddish shadow-sm rounded-3xl m-8 w-64">
                 <div class="p-2">
                     <label class="text-blackish">First Name</label>
@@ -55,7 +55,7 @@
                     <label class="text-blackish">Profile Image</label>
                 </div>
                 <div class="mr-2">
-                    <input class="w-full m-1 p-1 rounded-3xl bg-whiteish shadow-reddish shadow-inner" type="text" formControlName="profileImage"
+                    <input class="w-full m-1 p-1 rounded-3xl bg-whiteish shadow-reddish shadow-inner" type="file" (change)="onFileSelected($event)" formControlName="profileImage"
                         placeholder="{{user.profileImage}}">
                 </div>
             </div>

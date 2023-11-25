@@ -20,13 +20,13 @@ export class UsersService {
     const params = new HttpParams()
       .set('page', String(page))
       .set('limit', String(limit));
-    return this.http.get<User[]>(AUTH_API + 'user', { params }).pipe(
+    return this.http.get<User[]>(AUTH_API + '/user', { params }).pipe(
       catchError(this.handleError)
     );
   }
   // Get one user
   getOneUser(): Observable<User> {
-    return this.http.get<User>(AUTH_API + 'user/profile').pipe(
+    return this.http.get<User>(AUTH_API + '/user/profile').pipe(
       catchError(this.handleError)
     );
   }

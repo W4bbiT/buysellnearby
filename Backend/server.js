@@ -29,6 +29,6 @@ const productsRouter = require('./routes/products')
 app.use('/api/product', productsRouter)
 
 // Serve files from the 'uploads' directory
-app.use('/profilePhoto', express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 
 app.listen(process.env.PORT, () => console.log('server started'))
