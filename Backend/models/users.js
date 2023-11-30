@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
     },
     profileImage: {
         type: String,
+        default: "No Image"
     },
     role: {
         type: String,

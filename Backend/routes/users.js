@@ -6,10 +6,12 @@ const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+
+const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path')
 const multer = require('multer');
-const storage =   multer.diskStorage({
+const storage = multer.diskStorage({
   destination: function (req, file, callback) {
     const uploadPath = './uploads/profileImage/';
     if (!fs.existsSync(uploadPath)) {
@@ -18,12 +20,25 @@ const storage =   multer.diskStorage({
     callback(null, uploadPath);
   },
   filename: function (req, file, callback) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const fileName = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
+    console.log(file)
+    const fileName = file.originalname;
     callback(null, fileName);
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, callback) {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedMimes.includes(file.mimetype)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Invalid file type. Only JPEG and PNG are allowed.'));
+    }
+  },
+});
 
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
@@ -45,7 +60,7 @@ router.get('/profile', passport.authenticate('jwt', { session: false }), async (
 });
 
 // Creating one
-router.post('/signup', async (req, res) => {
+router.post('/signup', upload.single('profileImage'), async (req, res) => {
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -59,6 +74,7 @@ router.post('/signup', async (req, res) => {
     const user = new User({
       fName: req.body.fName,
       lName: req.body.lName,
+      profileImage: req.file.path,
       email: req.body.email,
       password: hashedPassword,
       createDate: Date.now(),
@@ -127,17 +143,19 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
     if (req.body.dob) {
       req.user.dob = req.body.dob;
     }
-    if (req.body.address.streetAddress) {
-      req.user.address.streetAddress = req.body.address.streetAddress;
-    }
-    if (req.body.address.city) {
-      req.user.address.city = req.body.address.city;
-    }
-    if (req.body.address.state) {
-      req.user.address.state = req.body.address.state;
-    }
-    if (req.body.address.zipcode) {
-      req.user.address.zipcode = req.body.address.zipcode;
+    if (req.body.address) {
+      if (req.body.address.streetAddress) {
+        req.user.address.streetAddress = req.body.address.streetAddress;
+      }
+      if (req.body.address.city) {
+        req.user.address.city = req.body.address.city;
+      }
+      if (req.body.address.state) {
+        req.user.address.state = req.body.address.state;
+      }
+      if (req.body.address.zipcode) {
+        req.user.address.zipcode = req.body.address.zipcode;
+      }
     }
     if (req.body.phone) {
       req.user.phone = req.body.phone;
@@ -157,10 +175,11 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       req.user.password = hashedPassword;
     }
     if (req.file) {
-      // console.log(req.file)
+      console.log(req.file);
+      console.log(req.file.path);
 
+      req.user.profileImage = req.file.path;
     }
-
     const updatedUser = await req.user.save();
     console.log(updatedUser);
     res.json(updatedUser);
