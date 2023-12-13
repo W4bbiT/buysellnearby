@@ -11,33 +11,21 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path')
 const multer = require('multer');
-const storage = multer.diskStorage({
-  destination: function (req, file, callback) {
-    const uploadPath = './uploads/profileImage/';
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    callback(null, uploadPath);
-  },
-  filename: function (req, file, callback) {
-    console.log(file)
-    const fileName = file.originalname;
-    callback(null, fileName);
+
+const storage = multer.memoryStorage();
+
+const filter = (req, file, callback) => {
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    callback(null, true);
+  } else {
+    callback(new Error('Only JPEG, PNG, and JPG images are allowed.'));
   }
-});
+};
+
 const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 1024 * 1024, // 5MB limit
-  },
-  fileFilter: function (req, file, callback) {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
-    if (allowedMimes.includes(file.mimetype)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Invalid file type. Only JPEG and PNG are allowed.'));
-    }
-  },
+  storage,
+  fileFilter: filter
 });
 
 const errorHandler = (err, req, res, next) => {
@@ -60,7 +48,7 @@ router.get('/profile', passport.authenticate('jwt', { session: false }), async (
 });
 
 // Creating one
-router.post('/signup', upload.single('profileImage'), async (req, res) => {
+router.post('/signup', async (req, res) => {
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -74,7 +62,6 @@ router.post('/signup', upload.single('profileImage'), async (req, res) => {
     const user = new User({
       fName: req.body.fName,
       lName: req.body.lName,
-      profileImage: req.file.path,
       email: req.body.email,
       password: hashedPassword,
       createDate: Date.now(),
@@ -174,11 +161,14 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       const hashedPassword = await bcrypt.hash(req.body.password, salt);
       req.user.password = hashedPassword;
     }
+    const directory = './uploads/profileImage';
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
     if (req.file) {
-      console.log(req.file);
-      console.log(req.file.path);
-
-      req.user.profileImage = req.file.path;
+      const path = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
+      await sharp(req.file.buffer).resize(300, 300).toFile(path);
+      req.user.profileImage = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
     }
     const updatedUser = await req.user.save();
     console.log(updatedUser);
