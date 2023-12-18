@@ -1,9 +1,29 @@
 // productRoutes.js
 const express = require('express');
-const mongoose = require('mongoose'); // Import the mongoose module
+const mongoose = require('mongoose');
+const multer = require('multer');
+const sharp = require('sharp');
 const router = express.Router();
 const Product = require('../models/products');
 const { validationResult } = require('express-validator');
+const passport = require('passport');
+const path = require('path');
+const fs = require('fs');
+
+// Multer configuration
+const storage = multer.memoryStorage();
+const filter = (req, file, callback) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        callback(null, true);
+    } else {
+        callback(new Error('Only JPEG, PNG, and JPG images are allowed.'));
+    }
+};
+const upload = multer({
+    storage,
+    fileFilter: filter
+});
 
 // Get all products with pagination
 router.get('/', async (req, res) => {
@@ -48,33 +68,23 @@ router.get('/search', async (req, res) => {
 router.get('/category-search/:categories', async (req, res) => {
     const combinedCategories = req.params.categories;
     const categories = combinedCategories.split('-').map(category => category.replace(/%20/g, ' '));
-    
     if (categories.length === 0) {
         return res.status(400).json({ message: 'No categories provided' });
     }
-    
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        
         // Build an array of regex patterns for each category
         const categoryRegexArray = categories.map(category => new RegExp(category, 'i'));
-        
         // Query products that match all categories using $all
         const products = await Product.find({ category: { $all: categoryRegexArray } })
             .skip((page - 1) * limit)
             .limit(limit);
-            
         res.json(products);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
-
-
-
-
-
 
 // Get a single product by ID
 router.get('/:pId', getProduct, async (req, res) => {
@@ -95,6 +105,142 @@ router.get('/:pId/reviews', getProductReviews, (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+// Create a product (accessible only by logged-in users)
+router.post('/create', passport.authenticate('jwt', { session: false }), upload.array('productImages'), async (req, res) => {
+    try {
+        const { productName, category, price, discount, description, inStock, featureProduct, details } = req.body;
+        const { user } = req;
+        const product = new Product({
+            productName,
+            category,
+            price,
+            discount,
+            description,
+            inStock,
+            featureProduct,
+            details,
+            owner: user._id,
+        });
+        // Process and save multiple images
+        if (req.files && req.files.length > 0) {
+            // Use sharp to resize the images and keep them below 2MB
+            const processedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    if (file.size > 1024 * 1024) {
+                        const resizedImage = await sharp(file.buffer)
+                            .resize({ width: 800 }) // Adjust the width as needed
+                            .toBuffer();
+                        return {
+                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
+                            buffer: resizedImage,
+                        };
+                    } else {
+                        return {
+                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
+                            buffer: file.buffer,
+                        };
+                    }
+                })
+            );
+            // Check if the number of processed images exceeds 5
+            if (processedImages.length > 5) {
+                return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
+            }
+            product.productImages = processedImages.map(({ filename }) => ({ filename }));
+        }
+        const newProduct = await product.save();
+        res.status(201).json(newProduct);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Edit a product (accessible only by the owner)
+router.patch('/edit/:pId', passport.authenticate('jwt', { session: false }), upload.array('productImages'), checkProductOwnership, async (req, res) => {
+    try {
+        const { productName, category, price, discount, description, inStock, featureProduct, details } = req.body;
+        const { user } = req;
+        const productId = req.params.pId;
+        const product = await Product.findOne({ _id: productId, owner: user._id });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        // Delete existing product images from the database
+        if (product.productImages && product.productImages.length > 0) {
+            product.productImages.forEach((image) => {
+                // Remove image from database or perform any other necessary deletion logic
+                // For example: Image.deleteOne({ _id: image._id });
+            });
+        }
+        product.productName = productName;
+        product.category = category;
+        product.price = price;
+        product.discount = discount;
+        product.description = description;
+        product.inStock = inStock;
+        product.featureProduct = featureProduct;
+        product.details = details;
+        // Process and update multiple images
+        if (req.files && req.files.length > 0) {
+            const processedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    if (file.size > 1024 * 1024) {
+                        const resizedImage = await sharp(file.buffer)
+                            .resize({ width: 800 }) // Adjust the width as needed
+                            .toBuffer();
+                        return {
+                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
+                            buffer: resizedImage,
+                        };
+                    } else {
+                        return {
+                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
+                            buffer: file.buffer,
+                        };
+                    }
+                })
+            );
+            // Check if the number of processed images exceeds 5
+            if (processedImages.length > 5) {
+                return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
+            }
+            product.productImages = processedImages.map(({ filename }) => ({ filename }));
+        }
+        const updatedProduct = await product.save();
+        res.json(updatedProduct);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Delete a product (accessible only by the owner)
+router.delete('/delete/:pId', passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
+    try {
+        const { user } = req;
+        const productId = req.params.pId;
+        const product = await Product.findOneAndDelete({ _id: productId, owner: user._id });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        // Delete associated images from the database
+        if (product.productImages && product.productImages.length > 0) {
+            product.productImages.forEach(async (image) => {
+                // Remove image from database or perform any other necessary deletion logic
+                // For example: Image.deleteOne({ _id: image._id });
+                // Also, delete the image file from the server if needed
+                const imagePath = path.join(__dirname, 'uploads', 'productImages', image.filename);
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            });
+        }
+        res.json({ message: 'Product deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 
 // Error handling middleware
 router.use((err, req, res, next) => {
@@ -121,68 +267,27 @@ async function getProduct(req, res, next) {
     }
 }
 
-
-// getProductReviews middleware with limit, pagination, and average rating calculation
-async function getProductReviews(req, res, next) {
+// Middleware to check if the user owns the product
+const checkProductOwnership = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
     try {
         const productId = req.params.pId;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
         const product = await Product.findById(productId);
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        const reviewsQuery = Review.find({ product: productId })
-            .populate({
-                path: 'user',
-                select: 'profileImage fName address.state',
-            })
-            .skip((page - 1) * limit)
-            .limit(limit);
-        const reviewsCountQuery = Review.countDocuments({ product: productId });
-        const averageQuery = Review.aggregate([
-            {
-                $match: { product: mongoose.Types.ObjectId(productId) }
-            },
-            {
-                $group: {
-                    _id: null,
-                    averageRating: { $avg: "$rating" }
-                }
-            }
-        ]);
-        const [reviews, totalCount, averageRating] = await Promise.all([
-            reviewsQuery.exec(),
-            reviewsCountQuery.exec(),
-            averageQuery.exec()
-        ]);
-        // Check if reviews exist and have at least one element
-        if (!reviews || reviews.length === 0) {
-            return res.status(404).json({ message: 'No reviews found' });
+        // Check if the logged-in user owns the product
+        if (product.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'You do not have permission to perform this action' });
         }
-        // Calculate the customers count
-        const customersCount = reviews.reduce((count, review) => {
-            if (!count.includes(review.user.toString())) {
-                count.push(review.user.toString());
-            }
-            return count;
-        }, []).length;
-        const formattedAverageRating = averageRating[0] ? parseFloat(averageRating[0].averageRating.toFixed(2)) : 0.00;
-        const totalPages = Math.ceil(totalCount / limit);
-        res.json({
-            reviews,
-            totalCount,
-            totalPages,
-            averageRating: formattedAverageRating,
-            customersCount // Include the customers count in the response
-        });
+        res.product = product;
+        next();
     } catch (err) {
         next(err);
     }
-}
+};
 
 module.exports = router;

@@ -28,14 +28,6 @@ const UserSchema = new mongoose.Schema({
         state: String,
         zipcode: String
     },
-    products: [
-        {
-            productId: {
-                type : mongoose.Schema.Types.ObjectId,
-                ref: 'Product'
-            }
-        }
-    ],
     createdOn: {
         type: Date,
         default: Date.now

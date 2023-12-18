@@ -2,6 +2,11 @@
 
 const mongoose = require('mongoose');
 const ProductSchema = new mongoose.Schema({
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   productName: {
       type: String,
       index:true,
@@ -18,9 +23,14 @@ const ProductSchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  productImage: [{
-    type: String,
-  }],
+  productImages: [
+    {
+      filename: {
+        type: String,
+        required: true,
+      },
+    }
+  ],
   createdOn: {
     type: Date,
     default: Date.now

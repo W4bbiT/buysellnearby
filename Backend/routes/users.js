@@ -1,3 +1,4 @@
+//userRoute.js
 require('dotenv').config();
 
 const express = require('express');
@@ -179,5 +180,4 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
     });
   }
 });
-
 module.exports = router;
