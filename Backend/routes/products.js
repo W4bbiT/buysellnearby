@@ -1,15 +1,15 @@
 // productRoutes.js
 const express = require('express');
 const mongoose = require('mongoose');
-const multer = require('multer');
-const sharp = require('sharp');
+
 const router = express.Router();
 const Product = require('../models/products');
 const { validationResult } = require('express-validator');
 const passport = require('passport');
 const path = require('path');
 const fs = require('fs');
-
+const multer = require('multer');
+const sharp = require('sharp');
 // Multer configuration
 const storage = multer.memoryStorage();
 const filter = (req, file, callback) => {
@@ -24,6 +24,7 @@ const upload = multer({
     storage,
     fileFilter: filter
 });
+
 
 // Get all products with pagination
 router.get('/', async (req, res) => {
@@ -97,57 +98,76 @@ router.get('/:pId', getProduct, async (req, res) => {
     }
 });
 
-// Get all reviews for a specific product
-router.get('/:pId/reviews', getProductReviews, (req, res) => {
-    try {
-        res.json(res.reviews);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+// Middleware to check if the user owns the product
+const checkProductOwnership = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-});
+    try {
+        const productId = req.params.pId;
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        // Check if the logged-in user owns the product
+        if (product.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'You do not have permission to perform this action' });
+        }
+        res.product = product;
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
 
 // Create a product (accessible only by logged-in users)
-router.post('/create', passport.authenticate('jwt', { session: false }), upload.array('productImages'), async (req, res) => {
+router.post('/create', upload.array('productImages'), passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        const { productName, category, price, discount, description, inStock, featureProduct, details } = req.body;
+        const { productName, category, price, description, inStock, featureProduct, details } = req.body;
         const { user } = req;
         const product = new Product({
             productName,
             category,
             price,
-            discount,
             description,
             inStock,
             featureProduct,
             details,
-            owner: user._id,
+            owner: req.user._id,
         });
         // Process and save multiple images
         if (req.files && req.files.length > 0) {
-            // Use sharp to resize the images and keep them below 2MB
-            const processedImages = await Promise.all(
-                req.files.map(async (file) => {
-                    if (file.size > 1024 * 1024) {
-                        const resizedImage = await sharp(file.buffer)
-                            .resize({ width: 800 }) // Adjust the width as needed
-                            .toBuffer();
-                        return {
-                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
-                            buffer: resizedImage,
-                        };
-                    } else {
-                        return {
-                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
-                            buffer: file.buffer,
-                        };
-                    }
-                })
-            );
+            const directory = `./uploads/productImage/${req.user._id}`;
+            if (!fs.existsSync(directory)) {
+                fs.mkdirSync(directory, { recursive: true });
+            }
+            // Create an array to store processed images
+            const processedImages = [];
+            for (let index = 0; index < req.files.length; index++) {
+                const file = req.files[index];
+                const imageExtension = file.originalname.split('.').pop();
+                const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
+                if (file.size > 2 * 1024 * 1024) {
+                    // Use sharp's asynchronous methods
+                    const resizedImage = await sharp(file.buffer)
+                        .resize({ width: 800 }) // Adjust the width as needed
+                        .toBuffer();
+                    // Write the resized buffer to the file
+                    fs.writeFileSync(imagePath, resizedImage);
+                    processedImages.push({ path: imagePath });
+                } else {
+                    // Write the original buffer to the file
+                    fs.writeFileSync(imagePath, file.buffer);
+                    processedImages.push({ path: imagePath });
+                }
+            }
             // Check if the number of processed images exceeds 5
             if (processedImages.length > 5) {
                 return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
             }
-            product.productImages = processedImages.map(({ filename }) => ({ filename }));
+            // Store the processed images in the productImages array
+            product.productImages = processedImages.map(({ path }) => ({ path }));
         }
         const newProduct = await product.save();
         res.status(201).json(newProduct);
@@ -156,10 +176,11 @@ router.post('/create', passport.authenticate('jwt', { session: false }), upload.
     }
 });
 
+
 // Edit a product (accessible only by the owner)
-router.patch('/edit/:pId', passport.authenticate('jwt', { session: false }), upload.array('productImages'), checkProductOwnership, async (req, res) => {
+router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
     try {
-        const { productName, category, price, discount, description, inStock, featureProduct, details } = req.body;
+        const { productName, category, price, description, inStock, featureProduct, details } = req.body;
         const { user } = req;
         const productId = req.params.pId;
         const product = await Product.findOne({ _id: productId, owner: user._id });
@@ -173,39 +194,59 @@ router.patch('/edit/:pId', passport.authenticate('jwt', { session: false }), upl
                 // For example: Image.deleteOne({ _id: image._id });
             });
         }
-        product.productName = productName;
-        product.category = category;
-        product.price = price;
-        product.discount = discount;
-        product.description = description;
-        product.inStock = inStock;
-        product.featureProduct = featureProduct;
-        product.details = details;
+        if (productName) {
+            product.productName = productName;
+        }
+        if (category) {
+            product.category = category;
+        }
+        if (price) {
+            product.price = price;
+        }
+        if (description) {
+            product.description = description;
+        }
+        if (inStock) {
+            product.inStock = inStock;
+        }
+        if (featureProduct) {
+            product.featureProduct = featureProduct;
+        }
+        if (details) {
+            product.details = details;
+        }
         // Process and update multiple images
         if (req.files && req.files.length > 0) {
-            const processedImages = await Promise.all(
-                req.files.map(async (file) => {
-                    if (file.size > 1024 * 1024) {
-                        const resizedImage = await sharp(file.buffer)
-                            .resize({ width: 800 }) // Adjust the width as needed
-                            .toBuffer();
-                        return {
-                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
-                            buffer: resizedImage,
-                        };
-                    } else {
-                        return {
-                            filename: `${user._id}_${product._id}_${Date.now()}.jpg`,
-                            buffer: file.buffer,
-                        };
-                    }
-                })
-            );
+            const directory = `./uploads/productImage/${req.user._id}`;
+            if (!fs.existsSync(directory)) {
+                fs.mkdirSync(directory, { recursive: true });
+            }
+            // Create an array to store processed images
+            const processedImages = [];
+            for (let index = 0; index < req.files.length; index++) {
+                const file = req.files[index];
+                const imageExtension = file.originalname.split('.').pop();
+                const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
+                if (file.size > 2 * 1024 * 1024) {
+                    // Use sharp's asynchronous methods
+                    const resizedImage = await sharp(file.buffer)
+                        .resize({ width: 800 }) // Adjust the width as needed
+                        .toBuffer();
+                    // Write the resized buffer to the file
+                    fs.writeFileSync(imagePath, resizedImage);
+                    processedImages.push({ path: imagePath });
+                } else {
+                    // Write the original buffer to the file
+                    fs.writeFileSync(imagePath, file.buffer);
+                    processedImages.push({ path: imagePath });
+                }
+            }
             // Check if the number of processed images exceeds 5
             if (processedImages.length > 5) {
                 return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
             }
-            product.productImages = processedImages.map(({ filename }) => ({ filename }));
+            // Store the processed images in the productImages array
+            product.productImages = processedImages.map(({ path }) => ({ path }));
         }
         const updatedProduct = await product.save();
         res.json(updatedProduct);
@@ -266,28 +307,5 @@ async function getProduct(req, res, next) {
         next(err);
     }
 }
-
-// Middleware to check if the user owns the product
-const checkProductOwnership = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    try {
-        const productId = req.params.pId;
-        const product = await Product.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        // Check if the logged-in user owns the product
-        if (product.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'You do not have permission to perform this action' });
-        }
-        res.product = product;
-        next();
-    } catch (err) {
-        next(err);
-    }
-};
 
 module.exports = router;

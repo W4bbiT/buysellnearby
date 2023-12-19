@@ -17,17 +17,14 @@ const ProductSchema = new mongoose.Schema({
   price: {
     type: Number,
   },
-  discount:  {
-    type: Number,
-  },
   description: {
     type: String,
   },
   productImages: [
     {
-      filename: {
+      path: {
         type: String,
-        required: true,
+        required: true
       },
     }
   ],
