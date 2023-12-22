@@ -176,24 +176,86 @@ router.post('/create', upload.array('productImages'), passport.authenticate('jwt
     }
 });
 
-
+async function processAndSaveProductImages(files, product, user, deletedImages) {
+    try {
+        // Ensure the product has a valid productImages array
+        if (!product.productImages) {
+            product.productImages = [];
+        }
+        // Remove deleted images from the productImages array
+        if (deletedImages && deletedImages.length > 0) {
+            product.productImages = product.productImages.filter((image, index) => !deletedImages.includes(index));
+            // Delete old images from the server
+            const deletedIndex = deletedImages[0]; // Assuming deletedImages is an array
+            const imageExtension = product.productImages[deletedIndex].path.split('.').pop();
+            const deletedImagePath = `./uploads/productImage/${user._id.toString()}/${product._id}_${deletedIndex + 1}.${imageExtension}`;
+            try {
+                if (fs.existsSync(deletedImagePath)) {
+                    await new Promise((resolve, reject) => {
+                        fs.unlink(deletedImagePath, (error) => {
+                            if (error) {
+                                console.error(`Error deleting image: ${deletedImagePath}`, error);
+                                reject(error);
+                            } else {
+                                resolve();
+                            }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error(`Error deleting image: ${deletedImagePath}`, error);
+            }
+        }
+        // Ensure that the total number of images doesn't exceed the limit (5)
+        const totalImageCount = product.productImages.length + files.length;
+        if (totalImageCount > 5) {
+            throw new Error('Cannot upload more than 5 images per product.');
+        }
+        // Process and save new images
+        const directory = `./uploads/productImage/${user._id}`;
+        if (!fs.existsSync(directory)) {
+            fs.mkdirSync(directory, { recursive: true });
+        }
+        const processedImages = [];
+        for (let index = 0; index < files.length; index++) {
+            const file = files[index];
+            const imageExtension = file.originalname.split('.').pop();
+            const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
+            if (file.size > 2 * 1024 * 1024) {
+                // Use sharp's asynchronous methods
+                const resizedImage = await sharp(file.buffer)
+                    .resize({ width: 800 }) // Adjust the width as needed
+                    .toBuffer();
+                // Write the resized buffer to the file
+                fs.writeFileSync(imagePath, resizedImage);
+                processedImages.push({ path: imagePath });
+            } else {
+                // Write the original buffer to the file
+                fs.writeFileSync(imagePath, file.buffer);
+                processedImages.push({ path: imagePath });
+            }
+        }
+        // Store the processed images in the productImages array
+        product.productImages = [...product.productImages, ...processedImages];
+        // Save the updated product with new images
+        const updatedProduct = await product.save();
+        return updatedProduct;
+    } catch (error) {
+        throw error;
+    }
+}
 // Edit a product (accessible only by the owner)
 router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
     try {
-        const { productName, category, price, description, inStock, featureProduct, details } = req.body;
+        const { productName, category, price, description, inStock, featureProduct, details, deletedImages } = req.body;
         const { user } = req;
         const productId = req.params.pId;
         const product = await Product.findOne({ _id: productId, owner: user._id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        // Delete existing product images from the database
-        if (product.productImages && product.productImages.length > 0) {
-            product.productImages.forEach((image) => {
-                // Remove image from database or perform any other necessary deletion logic
-                // For example: Image.deleteOne({ _id: image._id });
-            });
-        }
+        // Process and update multiple images
+        await processAndSaveProductImages(req.files, product, user, deletedImages);
         if (productName) {
             product.productName = productName;
         }
@@ -215,43 +277,58 @@ router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate(
         if (details) {
             product.details = details;
         }
-        // Process and update multiple images
-        if (req.files && req.files.length > 0) {
-            const directory = `./uploads/productImage/${req.user._id}`;
-            if (!fs.existsSync(directory)) {
-                fs.mkdirSync(directory, { recursive: true });
-            }
-            // Create an array to store processed images
-            const processedImages = [];
-            for (let index = 0; index < req.files.length; index++) {
-                const file = req.files[index];
-                const imageExtension = file.originalname.split('.').pop();
-                const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
-                if (file.size > 2 * 1024 * 1024) {
-                    // Use sharp's asynchronous methods
-                    const resizedImage = await sharp(file.buffer)
-                        .resize({ width: 800 }) // Adjust the width as needed
-                        .toBuffer();
-                    // Write the resized buffer to the file
-                    fs.writeFileSync(imagePath, resizedImage);
-                    processedImages.push({ path: imagePath });
-                } else {
-                    // Write the original buffer to the file
-                    fs.writeFileSync(imagePath, file.buffer);
-                    processedImages.push({ path: imagePath });
-                }
-            }
-            // Check if the number of processed images exceeds 5
-            if (processedImages.length > 5) {
-                return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
-            }
-            // Store the processed images in the productImages array
-            product.productImages = processedImages.map(({ path }) => ({ path }));
-        }
         const updatedProduct = await product.save();
         res.json(updatedProduct);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// Add this function to your routes file
+const deleteProductImage = async (userId, productId, imageIndex, product) => {
+    try {
+        const image = product.productImages[imageIndex];
+        const imagePath = `${image.path}`; // Add a dot at the beginning to make it a relative path
+        console.log('Deleting image at path:', imagePath);
+        // Check if the file exists before attempting to delete
+        const fileExists = await fs.promises.access(imagePath)
+            .then(() => true)
+            .catch(() => false);
+        if (fileExists) {
+            // Delete the image file
+            await fs.promises.unlink(imagePath);          
+            // Optional: Remove the image entry from the productImages array
+            product.productImages.splice(imageIndex, 1);
+            await product.save();        
+            console.log(`Image deleted successfully: ${imagePath}`);
+        } else {
+            console.log(`File not found: ${imagePath}`);
+            // Handle the case where the file doesn't exist
+        }
+    } catch (error) {
+        console.error(`Error deleting image: ${error.message}`);
+        throw error;
+    }
+};
+
+// New route to delete a specific image from a product
+router.delete('/delete/:productId/:imageIndex', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { user } = req;
+        const { productId, imageIndex } = req.params;
+        // Retrieve the product from the database
+        const product = await Product.findOne({ _id: productId, owner: user._id });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        // Delete the image file
+        await deleteProductImage(user._id, productId, imageIndex, product);
+        // Remove the image from the productImages array in the database
+        product.productImages.splice(imageIndex, 1);
+        await product.save();
+        res.json({ message: 'Image deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting image', error: error.message });
     }
 });
 
@@ -265,16 +342,11 @@ router.delete('/delete/:pId', passport.authenticate('jwt', { session: false }), 
             return res.status(404).json({ message: 'Product not found' });
         }
         // Delete associated images from the database
+        // Delete associated images from the database and file system
         if (product.productImages && product.productImages.length > 0) {
-            product.productImages.forEach(async (image) => {
-                // Remove image from database or perform any other necessary deletion logic
-                // For example: Image.deleteOne({ _id: image._id });
-                // Also, delete the image file from the server if needed
-                const imagePath = path.join(__dirname, 'uploads', 'productImages', image.filename);
-                if (fs.existsSync(imagePath)) {
-                    fs.unlinkSync(imagePath);
-                }
-            });
+            for (let index = 0; index < product.productImages.length; index++) {
+                await deleteProductImage(user._id, productId, index, product);
+            }
         }
         res.json({ message: 'Product deleted successfully' });
     } catch (err) {
