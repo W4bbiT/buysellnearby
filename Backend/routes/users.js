@@ -183,8 +183,9 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
 
 // Route to find product owners nearby
 router.get('/nearby/:longitude/:latitude', async (req, res) => {
+  ///nearby/:longitude/:latitude?radius=50000 for a 50 km radius.
   const { longitude, latitude } = req.params;
-  const radius = parseInt(req.query.radius) || 50000; // Default radius is 10 kilometers
+  const radius = parseInt(req.query.radius) || 50000; // Default radius is 50 kilometers
   if (isNaN(longitude) || isNaN(latitude)) {
       return res.status(400).json({ message: 'Invalid coordinates' });
   }
