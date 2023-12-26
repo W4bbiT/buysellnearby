@@ -40,9 +40,7 @@ const ProductSchema = new mongoose.Schema({
     default: false
   },
   details: {
-    size: String,
-    color: String,
-    info: String,
+    type: String,
   }
   
 }, { versionKey: false });

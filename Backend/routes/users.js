@@ -180,4 +180,37 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
     });
   }
 });
+
+// Route to find product owners nearby
+router.get('/nearby/:longitude/:latitude', async (req, res) => {
+  const { longitude, latitude } = req.params;
+  const radius = parseInt(req.query.radius) || 50000; // Default radius is 10 kilometers
+  if (isNaN(longitude) || isNaN(latitude)) {
+      return res.status(400).json({ message: 'Invalid coordinates' });
+  }
+  try {
+      const nearbyOwners = await User.find({
+          'address.location': {
+              $near: {
+                  $geometry: {
+                      type: 'Point',
+                      coordinates: [parseFloat(longitude), parseFloat(latitude)],
+                  },
+                  $maxDistance: radius,
+              },
+          },
+      }).select('_id'); // Select only the User IDs
+
+      const ownerIds = nearbyOwners.map(owner => owner._id);
+
+      const nearbyProducts = await Product.find({
+          owner: { $in: ownerIds },
+      }).populate('owner', 'fName'); // Populate owner details
+
+      res.json(nearbyProducts);
+  } catch (err) {
+      res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

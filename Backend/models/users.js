@@ -26,7 +26,12 @@ const UserSchema = new mongoose.Schema({
         streetAddress: String,
         city: String,
         state: String,
-        zipcode: String
+        zipcode: String,
+        country: String,
+        location: {
+            type: { type: String, default: 'Point' },
+            coordinates: [Number], // Longitude (1st), Latitude (2nd)
+        },
     },
     createdOn: {
         type: Date,
@@ -34,5 +39,7 @@ const UserSchema = new mongoose.Schema({
       },
 
 }, { versionKey: false })
+
+UserSchema.index({ 'address.location': '2dsphere' });
 
 module.exports = mongoose.model('User', UserSchema)
