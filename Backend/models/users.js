@@ -23,9 +23,7 @@ const UserSchema = new mongoose.Schema({
     },
     phone: String,
     address: {
-        streetAddress: String,
         city: String,
-        state: String,
         zipcode: String,
         country: String,
         location: {

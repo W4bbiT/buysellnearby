@@ -7,6 +7,7 @@ const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const Product = require('../models/products');
 
 const sharp = require('sharp');
 const fs = require('fs');
@@ -39,6 +40,26 @@ router.use(express.json());
 router.use(passport.initialize());
 router.use(errorHandler);
 // Getting the user info
+
+async function getGeolocation(address) {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+    const data = await response.json();
+    if (data && Array.isArray(data) && data.length > 0) {
+      const firstResult = data[0];
+      return {
+        latitude: parseFloat(firstResult.lat),
+        longitude: parseFloat(firstResult.lon),
+      };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching geolocation data:', error);
+    return null;
+  }
+}
+
 router.get('/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -53,13 +74,10 @@ router.post('/signup', async (req, res) => {
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
     const emailExist = await User.findOne({ email: req.body.email });
-
     if (emailExist) {
       return res.status(400).json({ message: 'Email already exists' });
     }
-
     const user = new User({
       fName: req.body.fName,
       lName: req.body.lName,
@@ -67,13 +85,22 @@ router.post('/signup', async (req, res) => {
       password: hashedPassword,
       createDate: Date.now(),
       address: {
-        streetAddress: "N/A",
-        city: "N/A",
-        state: "N/A",
-        zipcode: "N/A",
+        city: req.body.address.city,
+        zipcode: req.body.address.zipcode,
+        country: req.body.address.country
       }
     });
-
+    const addressString = `${req.body.address.zipcode}, ${req.body.address.country}`;
+    const geoData = await getGeolocation(addressString);
+    if (geoData) {
+      // Update the location field properly
+      user.address.location = {
+        type: 'Point',
+        coordinates: [geoData.longitude, geoData.latitude],
+      };
+    } else {
+      return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
+    }
     const newUser = await user.save();
     res.status(201).json(newUser);
   } catch (err) {
@@ -85,26 +112,20 @@ router.post('/signup', async (req, res) => {
 router.post('/signin', async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
-
     const passwordMatch = await bcrypt.compare(req.body.password, user.password);
-
     if (passwordMatch) {
       const payload = {
         _id: user._id,
         email: user.email,
         role: user.role
       };
-
       const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: 24 * 60 * 60, // 1 day in seconds
       });
-
       console.log("Bearer " + accessToken);
-
       res.status(200).json({
         accessToken: "Bearer " + accessToken,
         username: user.fName,
@@ -132,17 +153,26 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       req.user.dob = req.body.dob;
     }
     if (req.body.address) {
-      if (req.body.address.streetAddress) {
-        req.user.address.streetAddress = req.body.address.streetAddress;
-      }
       if (req.body.address.city) {
         req.user.address.city = req.body.address.city;
       }
-      if (req.body.address.state) {
-        req.user.address.state = req.body.address.state;
-      }
       if (req.body.address.zipcode) {
         req.user.address.zipcode = req.body.address.zipcode;
+      }
+      if (req.body.address.country) {
+        req.user.address.country = req.body.address.country;
+      }
+      // Update user's location (longitude and latitude) based on the provided address
+      const addressString = `${req.user.address.zipcode}, ${req.user.address.country}`;
+      const geoData = await getGeolocation(addressString);
+      if (geoData) {
+        // Update the location field properly
+        req.user.address.location = {
+          type: 'Point',
+          coordinates: [geoData.longitude, geoData.latitude],
+        };
+      } else {
+        return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
       }
     }
     if (req.body.phone) {
@@ -182,35 +212,40 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
 });
 
 // Route to find product owners nearby
-router.get('/nearby/:longitude/:latitude', async (req, res) => {
-  ///nearby/:longitude/:latitude?radius=50000 for a 50 km radius.
-  const { longitude, latitude } = req.params;
-  const radius = parseInt(req.query.radius) || 50000; // Default radius is 50 kilometers
-  if (isNaN(longitude) || isNaN(latitude)) {
-      return res.status(400).json({ message: 'Invalid coordinates' });
+router.get('/nearby', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  // /nearby?radius=50 for a 50 km radius.
+  const { coordinates } = req.user.address.location;
+  const radius = parseInt(req.query.radius) || 100; // Default radius is 50 kilometers
+  if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
+    return res.status(400).json({ message: 'Invalid user coordinates' });
   }
   try {
-      const nearbyOwners = await User.find({
-          'address.location': {
-              $near: {
-                  $geometry: {
-                      type: 'Point',
-                      coordinates: [parseFloat(longitude), parseFloat(latitude)],
-                  },
-                  $maxDistance: radius,
-              },
+    const nearbySellers = await User.find({
+      _id: { $ne: req.user._id }, // Exclude the logged-in user
+      'address.location': {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: coordinates,
           },
-      }).select('_id'); // Select only the User IDs
-
-      const ownerIds = nearbyOwners.map(owner => owner._id);
-
-      const nearbyProducts = await Product.find({
-          owner: { $in: ownerIds },
-      }).populate('owner', 'fName'); // Populate owner details
-
-      res.json(nearbyProducts);
+          $maxDistance: radius * 1000, // Convert radius to meters
+        },
+      },
+    }).select('_id');
+    if (nearbySellers.length === 0) {
+      return res.json({ message: 'No nearby sellers found' });
+    }
+    const sellerIds = nearbySellers.map(seller => seller._id);
+    // Find products from nearby sellers
+    const nearbyProducts = await Product.find({
+      owner: { $in: sellerIds },
+    }).populate('owner', 'fName'); // Populate owner details
+    if (nearbyProducts.length === 0) {
+      return res.json({ message: 'No products found from nearby sellers' });
+    }
+    res.json(nearbyProducts);
   } catch (err) {
-      res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
