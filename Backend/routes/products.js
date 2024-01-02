@@ -31,15 +31,31 @@ router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const sort = req.query.sort || '-createdOn'; // Default sorting by descending creation date
+        const filter = req.query.filter || '';
+        const minPrice = parseFloat(req.query.minPrice) || 0;
+        const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_SAFE_INTEGER;
         const totalCount = await Product.countDocuments();
         const totalPages = Math.ceil(totalCount / limit);
-        const products = await Product.find()
+        const query = {
+            $and: [
+                {
+                    $or: [
+                        { productName: { $regex: filter, $options: 'i' } },
+                        { category: { $regex: filter, $options: 'i' } },
+                    ],
+                },
+                { price: { $gte: minPrice, $lte: maxPrice } },
+            ],
+        };
+        const products = await Product.find(query)
+            .sort(sort)
             .skip((page - 1) * limit)
             .limit(limit);
         res.json({
             products,
             totalCount,
-            totalPages
+            totalPages,
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
