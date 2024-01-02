@@ -1,20 +1,38 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Blank
+      BuySellNearby
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+<ion-content>
+  @if (isLoading) {
+    <ion-list>
+      @for (i of dummyArray; track i) {
+        <ion-item lines="none" class="ion-padding-bottom">
+          <ion-avatar slot="start">
+            <ion-skeleton-text></ion-skeleton-text>
+          </ion-avatar>
+          <ion-skeleton-text animated style="height: 40px"/>
+        </ion-item>
+      }
+    </ion-list>
+  } @else if (error) {
+    <ion-alert header="Error" [message]={error} isOpen="true" buttons="Ok"/>
+  }
+  <ion-list>
+    @for (item of products; track item._id) {
+      <ion-item>
+        <ion-avatar slot="start">
+          <img [src]="imageBaseURL + '{{item.productImages}}'"/>
+        </ion-avatar>
+        <ion-label class="ion-text-wrap">
+          <h3>{{item.productName}}</h3>
+          <p>{{item.description}}</p>
+          <p>{{item.price}}</p>
+        </ion-label>
+      </ion-item>
+    }
+  </ion-list>
 </ion-content>

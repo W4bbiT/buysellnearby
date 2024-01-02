@@ -30,7 +30,7 @@ const upload = multer({
 router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 50;
         const sort = req.query.sort || '-createdOn'; // Default sorting by descending creation date
         const filter = req.query.filter || '';
         const minPrice = parseFloat(req.query.minPrice) || 0;
@@ -90,7 +90,7 @@ router.get('/category-search/:categories', async (req, res) => {
     }
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 50;
         // Build an array of regex patterns for each category
         const categoryRegexArray = categories.map(category => new RegExp(category, 'i'));
         // Query products that match all categories using $all

@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { Observable, catchError, delay } from 'rxjs';
+import { Product } from '../models/product';
 
-const BASE_URL = 'http://localhost:8100/api/'
+const BASE_URL = 'http://localhost:3000/api'
 
 @Injectable({
   providedIn: 'root'
@@ -12,14 +14,19 @@ export class ProductsService {
 
   constructor() { }
 
-  getAllProducts(page = 1, filter = '', minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, sort = '-createdOn') {
-    return this.http.get(`${BASE_URL}/products?page=${page}&filter=${filter}&minPrice=${minPrice}&maxPrice=${maxPrice}&sort=${sort}`);
+  getAllProducts(page = 1, filter = '', minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, sort = '-createdOn'): Observable<Product[]> {
+    const url = `${BASE_URL}/product?page=${page}&filter=${filter}&minPrice=${minPrice}&maxPrice=${maxPrice}&sort=${sort}`;
+    return this.http.get<Product[]>(url).pipe(
+      catchError((error) => {
+        console.error('Error fetching products:', error);
+        throw error;
+      }),
+      delay(500),
+    );
   }
 
-
-
-  getProductsNearby(longitude: number, latitude: number, radius: number) {
-    return this.http.get(`${BASE_URL}/products/nearby/${longitude}/${latitude}?radius=${radius}`);
+  getProductDetails(productId: string): Observable<Product> {
+    return this.http.get<Product>(`${BASE_URL}/product/${productId}`);
   }
 
 }
