@@ -108,7 +108,7 @@ router.get('/:pId', getProduct, async (req, res) => {
     try {
         const product = res.product;
         await product.populate('details');
-        res.json({ success: true, data: product });
+        res.json({ success: true, product: product });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

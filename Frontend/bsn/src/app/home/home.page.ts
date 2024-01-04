@@ -1,15 +1,18 @@
 import { Component, inject } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, InfiniteScrollCustomEvent, IonList, IonItem, IonSkeletonText, IonAvatar, IonAlert, IonLabel } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, InfiniteScrollCustomEvent, IonList, IonItem, IonSkeletonText, IonAvatar, IonAlert, IonLabel, IonCard, IonCardContent, IonCardSubtitle, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonBadge, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
 import { ProductsService } from '../services/products.service';
 import { catchError, finalize } from 'rxjs';
 import { Product } from '../models/product';
+import { CurrencyPipe } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonSkeletonText, IonAvatar, IonAlert, IonLabel],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonSkeletonText, IonAvatar, IonAlert, IonLabel, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonGrid, IonRow, IonCol,
+    CurrencyPipe, RouterModule, IonBadge, IonInfiniteScroll, IonInfiniteScrollContent],
 })
 export class HomePage {
 
@@ -45,7 +48,7 @@ export class HomePage {
     ).subscribe({
       next: (res) => {
         console.log(res);
-        this.products = res;
+        this.products = res.products;
         if (event) {
           event.target.disabled = true;
         }

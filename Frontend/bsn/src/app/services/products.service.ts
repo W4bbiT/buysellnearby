@@ -14,9 +14,9 @@ export class ProductsService {
 
   constructor() { }
 
-  getAllProducts(page = 1, filter = '', minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, sort = '-createdOn'): Observable<Product[]> {
+  getAllProducts(page = 1, filter = '', minPrice = 0, maxPrice = Number.MAX_SAFE_INTEGER, sort = '-createdOn'): Observable<any> {
     const url = `${BASE_URL}/product?page=${page}&filter=${filter}&minPrice=${minPrice}&maxPrice=${maxPrice}&sort=${sort}`;
-    return this.http.get<Product[]>(url).pipe(
+    return this.http.get<any>(url).pipe(
       catchError((error) => {
         console.error('Error fetching products:', error);
         throw error;
@@ -25,8 +25,15 @@ export class ProductsService {
     );
   }
 
-  getProductDetails(productId: string): Observable<Product> {
-    return this.http.get<Product>(`${BASE_URL}/product/${productId}`);
+  getProductDetails(productId: string): Observable<any> {
+    const url = `${BASE_URL}/product/${productId}`;
+    return this.http.get<any>(url).pipe(
+      catchError((error) => {
+        console.error('Error fetching product:', error);
+        throw error;
+      }),
+      delay(500),
+    );
   }
 
 }
