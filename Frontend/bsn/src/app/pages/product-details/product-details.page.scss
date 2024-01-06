@@ -1,3 +1,12 @@
-div img{
-    width: 80vw;
+img{
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
 }
+@media (min-width: 768px) {
+    img {
+      width: 500px;
+      height: 500px;
+    }
+}
+  

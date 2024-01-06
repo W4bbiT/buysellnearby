@@ -25,7 +25,6 @@ const upload = multer({
     fileFilter: filter
 });
 
-
 // Get all products with pagination
 router.get('/', async (req, res) => {
     try {
@@ -94,7 +93,7 @@ router.get('/category-search/:categories', async (req, res) => {
         // Build an array of regex patterns for each category
         const categoryRegexArray = categories.map(category => new RegExp(category, 'i'));
         // Query products that match all categories using $all
-        const products = await Product.find({ category: { $all: categoryRegexArray } })
+        const products = await Product.find({ category: { $in: categoryRegexArray } })
             .skip((page - 1) * limit)
             .limit(limit);
         res.json(products);
@@ -328,7 +327,7 @@ const deleteProductImage = async (userId, productId, imageIndex, product) => {
 };
 
 // New route to delete a specific image from a product
-router.delete('/delete/:productId/:imageIndex', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.delete('/delete-image/:productId/:imageIndex', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { user } = req;
         const { productId, imageIndex } = req.params;

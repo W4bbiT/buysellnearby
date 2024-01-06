@@ -1,13 +1,24 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>footer</ion-title>
-  </ion-toolbar>
-</ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">footer</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-tabs>
+    <ion-tab-bar slot="Home">
+      <ion-tab-button tab="home">
+        <ion-icon name="home"></ion-icon>
+        Home
+      </ion-tab-button>
+      <ion-tab-button tab="Chat">
+        <ion-icon name="chatbubble-ellipses"></ion-icon>
+        Chat
+      </ion-tab-button>
+      <ion-tab-button tab="Add">
+        <ion-icon name="add-circle"></ion-icon>
+        Add
+      </ion-tab-button>
+      <ion-tab-button tab="profile">
+        <ion-icon name="person-circle"></ion-icon>
+        Profile
+      </ion-tab-button>
+    </ion-tab-bar>
+  </ion-tabs>
 </ion-content>
+

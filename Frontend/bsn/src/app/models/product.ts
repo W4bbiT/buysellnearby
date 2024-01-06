@@ -1,3 +1,9 @@
+export interface ApiResponse {
+  products: Product[];
+  totalCount: number;
+  totalPages: number;
+}
+
 export interface Product {
   _id: string;
   owner: string;

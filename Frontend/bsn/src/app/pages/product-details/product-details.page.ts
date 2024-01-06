@@ -1,11 +1,13 @@
-import { Component, inject, Input, signal, WritableSignal, AfterViewInit,
-ViewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import {
+  Component, inject, Input, signal, WritableSignal, AfterViewInit,
+  ViewChild, CUSTOM_ELEMENTS_SCHEMA, ElementRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ProductsService } from 'src/app/services/products.service';
 import { Product } from 'src/app/models/product';
-import {register} from 'swiper/element/bundle'
+import { register } from 'swiper/element/bundle'
 import { Swiper } from 'swiper'
 
 @Component({
@@ -20,20 +22,23 @@ export class ProductDetailsPage implements AfterViewInit {
 
   private productService = inject(ProductsService);
   public imageBaseURL = 'http://localhost:3000/';
-  public product: WritableSignal<Product | null> = signal(null)
-
+  public product: WritableSignal<Product | null> = signal(null);
+  @ViewChild("swiperEx") swiperEx?: ElementRef<{ swiper: Swiper }>;
   @Input()
-  set pId(productId: string){
+  set productId(productId: string) {
     this.productService.getProductDetails(productId).subscribe((res) => {
-      console.log(res.product);
+      console.log(res);
       this.product.set(res.product);
     })
   }
 
   ngAfterViewInit(): void {
-      register();
+    register();
   }
 
   constructor() { }
 
+  onSlideChange(){
+    console.log(this.swiperEx?.nativeElement.swiper.activeIndex);
+  }
 }

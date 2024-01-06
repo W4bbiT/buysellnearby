@@ -11,10 +11,6 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'home-defer',
-    loadComponent: () => import('./pages/home-defer/home-defer.page').then( m => m.HomeDeferPage)
-  },
-  {
     path: 'sign-in',
     loadComponent: () => import('./pages/sign-in/sign-in.page').then( m => m.SignInPage)
   },
@@ -39,7 +35,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/footer/footer.page').then( m => m.FooterPage)
   },
   {
-    path: 'details/:pId',
+    path: 'details/:productId',
     loadComponent: () => import('./pages/product-details/product-details.page').then( m => m.ProductDetailsPage)
   },
 ];

@@ -28,6 +28,9 @@ app.use('/api/user', usersRouter)
 const productsRouter = require('./routes/products')
 app.use('/api/product', productsRouter)
 
+const chatRouter = require('./routes/chatRoute')
+app.use('/api/chat', chatRouter)
+
 // Serve files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
 

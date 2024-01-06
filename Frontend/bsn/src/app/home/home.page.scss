@@ -1,4 +1,43 @@
-ion-card{
-  width: 100px;
-  height: 100px;
+ion-card {
+  width: 28vw;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 3px;
+}
+
+img {
+  width: 28vw;
+  object-fit: cover;
+}
+
+ion-infinite-scroll-content {
+  margin-top: 16px;
+}
+
+ion-item, ion-alert {
+  margin: 8px;
+}
+
+ion-label.ion-text-center {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+}
+
+ion-infinite-scroll {
+  margin-top: 16px;
+}
+
+ion-content {
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  ion-card {
+    width: 12vw;
+  }
+
+  img {
+    width: 12vw;
+  }
 }

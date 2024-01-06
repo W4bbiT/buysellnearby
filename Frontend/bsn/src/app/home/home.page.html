@@ -7,40 +7,45 @@
 </ion-header>
 
 <ion-content>
-  @if (isLoading) {
-  <ion-list>
-    @for (i of dummyArray; track i) {
-    <ion-item lines="none" class="ion-padding-bottom">
-      <ion-avatar slot="start">
-        <ion-skeleton-text></ion-skeleton-text>
-      </ion-avatar>
-      <ion-skeleton-text animated style="height: 40px" />
-    </ion-item>
-    }
-  </ion-list>
-  } @else if (error) {
-  <ion-alert header="Error" [message]={error} isOpen="true" buttons="Ok" />
-  }
-  @if (products){
-  <ion-grid>
-    <ion-row class="ion-justify-content-between">
-      @for (product of products; track product._id) {
-      <ion-col button [routerLink]="['/details', product._id]">
-        <ion-card>
-          <img [src]="imageBaseURL + product.productImages[0].path" />
-        </ion-card>
-      </ion-col>
-      } @empty {
-      @if(!isLoading){
-      <ion-item lines="none">
-        <ion-label class="ion-text-center">No Products Found!</ion-label>
+  @defer (when !isLoading) {
+    @if (products){
+      <ion-grid>
+        <ion-row class="">
+          
+          @for (product of products; track product._id) {
+          <ion-col button [routerLink]="['/details', product._id]">
+            <ion-card>
+              <img [src]="imageBaseURL + product.productImages[0].path" />
+            </ion-card>
+          </ion-col>
+          } @empty {
+          @if(!isLoading){
+          <ion-item lines="none">
+            <ion-label class="ion-text-center">No Products Found!</ion-label>
+          </ion-item>
+          }
+          }
+        </ion-row>
+      </ion-grid>
+      }
+      <ion-infinite-scroll (ionInfinite)="loadMore($event)">
+        <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading..."></ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+  } @placeholder {
+    <ion-list class="ion-padding-top">
+      @for (i of dummyArray; track i) {
+      <ion-item lines="none" class="ion-padding-bottom">
+        <ion-avatar slot="start">
+          <ion-skeleton-text></ion-skeleton-text>
+        </ion-avatar>
+        <ion-skeleton-text animated style="height: 40px" />
       </ion-item>
       }
-      }
-    </ion-row>
-  </ion-grid>
+    </ion-list>
+  } @error {
+    <ion-alert header="Error" [message]="error" isOpen="true" [buttons]="['Ok']"/>
+  } @loading(minimum 500ms){
+    <ion-label class="ion-text-center">Loading...</ion-label>
+
   }
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)">
-    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading..."></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
 </ion-content>
