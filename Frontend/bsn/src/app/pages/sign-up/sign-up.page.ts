@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
+import { UsersService } from 'src/app/services/users.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-sign-up',
@@ -11,11 +13,38 @@ import { IonicModule } from '@ionic/angular';
   imports: [IonicModule, CommonModule, FormsModule, ReactiveFormsModule]
 })
 export class SignUpPage implements OnInit {
+  authService = inject(AuthService);
+  fb = inject(FormBuilder)
+  userForm = this.fb.group({
+    email: new FormControl('', [Validators.required]),
+    password: new FormControl('', [Validators.required]),
+    fName: new FormControl('', [Validators.required]),
+    lName: new FormControl('', [Validators.required]),
+    phone: new FormControl('', [Validators.required]),
+    city: new FormControl('', [Validators.required]),
+    country: new FormControl('', [Validators.required]),
+    zipcode: new FormControl('', [Validators.required])
+  })
 
-  userForm = FormGroup;
   constructor() { }
 
   ngOnInit() {
+  }
+
+  onSubmit(){
+    if(this.userForm.valid){
+      this.authService.signUp(this.userForm.value).subscribe({
+        next:(res) => {
+          console.log(res);
+          alert("User created successfully");
+        },
+        error: (err) => {
+          alert("Error signing up! Check whats missing!");
+        }
+      })
+    }else{
+      this.userForm.markAllAsTouched()
+    }
   }
 
 }

@@ -82,15 +82,16 @@ router.post('/signup', async (req, res) => {
       fName: req.body.fName,
       lName: req.body.lName,
       email: req.body.email,
+      phone: req.body.phone,
       password: hashedPassword,
       createDate: Date.now(),
       address: {
-        city: req.body.address.city,
-        zipcode: req.body.address.zipcode,
-        country: req.body.address.country
+        city: req.body.city,
+        zipcode: req.body.zipcode,
+        country: req.body.country
       }
     });
-    const addressString = `${req.body.address.zipcode}, ${req.body.address.country}`;
+    const addressString = `${req.body.zipcode}, ${req.body.country}`;
     const geoData = await getGeolocation(addressString);
     if (geoData) {
       // Update the location field properly
@@ -152,29 +153,28 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
     if (req.body.dob) {
       req.user.dob = req.body.dob;
     }
-    if (req.body.address) {
-      if (req.body.address.city) {
-        req.user.address.city = req.body.address.city;
-      }
-      if (req.body.address.zipcode) {
-        req.user.address.zipcode = req.body.address.zipcode;
-      }
-      if (req.body.address.country) {
-        req.user.address.country = req.body.address.country;
-      }
-      // Update user's location (longitude and latitude) based on the provided address
-      const addressString = `${req.user.address.zipcode}, ${req.user.address.country}`;
-      const geoData = await getGeolocation(addressString);
-      if (geoData) {
-        // Update the location field properly
-        req.user.address.location = {
-          type: 'Point',
-          coordinates: [geoData.longitude, geoData.latitude],
-        };
-      } else {
-        return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
-      }
+    if (req.body.city) {
+      req.user.address.city = req.body.city;
     }
+    if (req.body.zipcode) {
+      req.user.address.zipcode = req.body.zipcode;
+    }
+    if (req.body.country) {
+      req.user.address.country = req.body.country;
+    }
+    // Update user's location (longitude and latitude) based on the provided address
+    const addressString = `${req.user.address.zipcode}, ${req.user.address.country}`;
+    const geoData = await getGeolocation(addressString);
+    if (geoData) {
+      // Update the location field properly
+      req.user.address.location = {
+        type: 'Point',
+        coordinates: [geoData.longitude, geoData.latitude],
+      };
+    } else {
+      return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
+    }
+
     if (req.body.phone) {
       req.user.phone = req.body.phone;
     }
