@@ -11,8 +11,8 @@ export class TokenStorageService {
     this.initStorage();
   }
 
-  async initStorage(){
-    await this.storage.create();
+  initStorage(){
+    this.storage.create();
   }
 
   async set(key: string, value: any){

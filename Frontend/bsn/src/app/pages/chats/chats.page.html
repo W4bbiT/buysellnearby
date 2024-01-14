@@ -1,0 +1,15 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Chats</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-list>
+    @for (item of allChat; track $index) {
+      <ion-item>
+        <ion-label>{{ message.sender }}: {{ message.message }}</ion-label>
+      </ion-item>
+    }
+  </ion-list>
+</ion-content>

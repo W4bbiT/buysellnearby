@@ -1,3 +1,4 @@
+import { UserApi } from "./user";
 export interface ApiResponse {
   products: Product[];
   totalCount: number;
@@ -6,7 +7,7 @@ export interface ApiResponse {
 
 export interface Product {
   _id: string;
-  owner: string;
+  owner: UserApi;
   productName: string;
   category: string[];
   price: number;
@@ -15,10 +16,10 @@ export interface Product {
   featureProduct: boolean;
   details: string;
   productImages: ProductImage[];
-  createdOn: string;
+  createdOn: Date;
 }
 
-export interface ProductImage {
+interface ProductImage {
   path: string;
   _id: string;
 }

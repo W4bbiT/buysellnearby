@@ -31,6 +31,7 @@
     </ion-card-header>
     <ion-card-content>
       <ion-item>
+        <ion-button (click)="setupChat(product.productName, product.owner._id)">Chat</ion-button>
         <ion-label>
           <h3>Description</h3>
           <p>{{ product.description }}</p>

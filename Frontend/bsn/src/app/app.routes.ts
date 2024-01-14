@@ -14,12 +14,12 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'sign-in',
+    path: 'login',
     loadComponent: () => import('./pages/sign-in/sign-in.page').then( m => m.SignInPage),
     canActivate: [LoggedInGuard]
   },
   {
-    path: 'sign-up',
+    path: 'register',
     loadComponent: () => import('./pages/sign-up/sign-up.page').then( m => m.SignUpPage),
     canActivate: [LoggedInGuard]
   },
@@ -46,5 +46,27 @@ export const routes: Routes = [
   {
     path: 'details/:productId',
     loadComponent: () => import('./pages/product-details/product-details.page').then( m => m.ProductDetailsPage)
+  },
+  {
+    path: 'chats',
+    loadComponent: () => import('./pages/chats/chats.page').then( m => m.ChatsPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'chat/:userId',
+    loadComponent: () => import('./pages/chat-list/chat-list.page').then( m => m.ChatListPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'edit-profile',
+    loadComponent: () => import('./pages/edit-profile/edit-profile.page').then( m => m.EditProfilePage)
+  },
+  {
+    path: 'add-product',
+    loadComponent: () => import('./pages/add-product/add-product.page').then( m => m.AddProductPage)
+  },
+  {
+    path: 'edit-product',
+    loadComponent: () => import('./pages/edit-product/edit-product.page').then( m => m.EditProductPage)
   },
 ];

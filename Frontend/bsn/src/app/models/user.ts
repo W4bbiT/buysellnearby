@@ -1,4 +1,4 @@
-interface UserApi {
+export interface UserApi {
   fName: string;
   lName: string;
   email: string;
@@ -8,7 +8,7 @@ interface UserApi {
   phone: string;
   address: Address;
   _id: string;
-  createdOn: string;
+  createdOn: Date;
 }
 
 interface Address {

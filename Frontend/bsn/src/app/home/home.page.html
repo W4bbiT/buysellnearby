@@ -10,8 +10,7 @@
   @defer (when !isLoading) {
     @if (products){
       <ion-grid>
-        <ion-row class="">
-          
+        <ion-row>
           @for (product of products; track product._id) {
           <ion-col button [routerLink]="['/details', product._id]">
             <ion-card>

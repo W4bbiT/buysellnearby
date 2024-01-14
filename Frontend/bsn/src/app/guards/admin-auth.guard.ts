@@ -16,7 +16,7 @@ export class AdminAuthGuard {
       .pipe(
         map(isAdmin => {
           if (!isAdmin) {
-            this.router.navigateByUrl('/sign-in');
+            this.router.navigateByUrl('/login');
           }
           return isAdmin;
         }))

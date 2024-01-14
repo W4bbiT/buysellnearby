@@ -6,4 +6,27 @@
 
 <ion-content [fullscreen]="true">
   <ion-button (click)="onSignOut()">Sign Out</ion-button>
+  @if(profileData){
+  <ion-card>
+    <div class="avatar">
+    <ion-img [src]="'http://localhost:3000/' + profileData.profileImage" alt="Profile Image"></ion-img>
+    </div>
+    <ion-card-header>
+      <ion-card-subtitle>{{ profileData.fName }} {{ profileData.lName }}</ion-card-subtitle>
+      <ion-card-title>{{ profileData.email }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-label>
+        <h3>Phone</h3>
+        <p>{{ profileData.phone }}</p>
+      </ion-label>
+      <ion-label>
+        <h3>Address</h3>
+        <p>{{ profileData.address.city }}, {{ profileData.address.country }} {{ profileData.address.zipcode }}</p>
+      </ion-label>
+    </ion-card-content>
+  </ion-card>
+  <ion-button (click)="onEditProfile()" expand="full" fill="outline">Edit Profile</ion-button>
+  <ion-button (click)="onSignOut()" expand="full" color="danger">Sign Out</ion-button>
+  }
 </ion-content>

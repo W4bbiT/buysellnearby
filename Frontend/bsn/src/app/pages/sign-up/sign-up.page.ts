@@ -33,15 +33,7 @@ export class SignUpPage implements OnInit {
 
   onSubmit(){
     if(this.userForm.valid){
-      this.authService.signUp(this.userForm.value).subscribe({
-        next:(res) => {
-          console.log(res);
-          alert("User created successfully");
-        },
-        error: (err) => {
-          alert("Error signing up! Check whats missing!");
-        }
-      })
+      this.authService.signUp(this.userForm.value)
     }else{
       this.userForm.markAllAsTouched()
     }

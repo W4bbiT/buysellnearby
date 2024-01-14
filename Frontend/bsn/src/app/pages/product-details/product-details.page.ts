@@ -4,11 +4,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, NavController } from '@ionic/angular';
 import { ProductsService } from 'src/app/services/products.service';
 import { Product } from 'src/app/models/product';
 import { register } from 'swiper/element/bundle'
 import { Swiper } from 'swiper'
+import { UsersService } from 'src/app/services/users.service';
+import { UserApi } from 'src/app/models/user';
 
 @Component({
   selector: 'app-product-details',
@@ -24,6 +26,10 @@ export class ProductDetailsPage implements AfterViewInit {
   public imageBaseURL = 'http://localhost:3000/';
   public product: WritableSignal<Product | null> = signal(null);
   @ViewChild("swiperEx") swiperEx?: ElementRef<{ swiper: Swiper }>;
+  public isLoading: boolean = true;
+  error =  '';
+  private userService = inject(UsersService)
+  public navCtrl = inject(NavController)
   @Input()
   set productId(productId: string) {
     this.productService.getProductDetails(productId).subscribe((res) => {
@@ -33,12 +39,28 @@ export class ProductDetailsPage implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    register();
+    register(); //swiper
   }
 
   constructor() { }
 
   onSlideChange(){
     console.log(this.swiperEx?.nativeElement.swiper.activeIndex);
+  }
+
+  async setupChat(productName: string, ownerId: string, ){
+    this.isLoading = true;
+    this.error = "null";
+    try {
+      const loggedInUser = await this.userService.getProfile();
+      const userId = loggedInUser._id
+      const response = this.userService.setUpChat(productName, userId, ownerId);
+      console.log('Message sent successfully:', response);
+    } catch (error) {
+      console.error('Error message:', error);
+      this.error = 'Failed.';
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

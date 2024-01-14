@@ -15,7 +15,7 @@ export class AuthGuard {
     return from(this.authService.isUserAuthenticated())
       .pipe(mergeMap(isAuthenticated => {
         return new Observable<boolean>(observer => {
-          if (!isAuthenticated) this.router.navigateByUrl('/sign-in')
+          if (!isAuthenticated) this.router.navigateByUrl('/login')
           observer.next(isAuthenticated)
         })
       }))

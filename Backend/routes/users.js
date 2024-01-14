@@ -116,30 +116,27 @@ router.post('/signin', async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
-    const passwordMatch = await bcrypt.compare(req.body.password, user.password);
-    if (passwordMatch) {
-      const payload = {
-        _id: user._id,
-        email: user.email,
-        role: user.role
-      };
-      const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: 24 * 60 * 60, // 1 day in seconds
-      });
-      console.log("Bearer " + accessToken);
-      res.status(200).json({
-        accessToken: "Bearer " + accessToken,
-        username: user.fName,
-        role: user.role,
-        expiresIn: 24 * 60 * 60 // 1 day in seconds
-      });
-    } else {
-      res.send('Please sign in!');
-    }
+    const payload = {
+      _id: user._id,
+      email: user.email,
+      role: user.role
+    };
+    const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: 24 * 60 * 60, // 1 day in seconds
+    });
+    const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET);
+    res.status(200).json({
+      accessToken: "Bearer " + accessToken,
+      refreshToken: refreshToken,
+      username: user.fName,
+      role: user.role,
+      expiresIn: 24 * 60 * 60 // 1 day in seconds
+    });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 });
+
 
 // Updating one
 router.patch('/update-user', upload.single('profileImage'), passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -213,33 +210,64 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
 
 // Route to find product owners nearby
 router.get('/nearby', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  // /nearby?radius=50 for a 50 km radius.
+  // nearby?radius=50 for a 50 km radius.
   const { coordinates } = req.user.address.location;
-  const radius = parseInt(req.query.radius) || 100; // Default radius is 50 kilometers
+  const radius = parseInt(req.query.radius) || 100; // Default radius is 100 kilometers
   if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
     return res.status(400).json({ message: 'Invalid user coordinates' });
   }
+  const filter = req.query.filter || '';
+  const minPrice = parseFloat(req.query.minPrice) || 0;
+  const sort = req.query.sort || '-createdOn'; // Default sorting by descending creation date
+  const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_SAFE_INTEGER;
+  const excludeLoggedInUser = req.query.excludeLoggedInUser === 'true';
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
   try {
-    const nearbySellers = await User.find({
-      _id: { $ne: req.user._id }, // Exclude the logged-in user
-      'address.location': {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: coordinates,
+    let nearbySellers;
+    if (excludeLoggedInUser) {
+      nearbySellers = await User.find({
+        _id: { $ne: req.user._id }, // Exclude the logged-in user
+        'address.location': {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: coordinates,
+            },
+            $maxDistance: radius * 1000, // Convert radius to meters
           },
-          $maxDistance: radius * 1000, // Convert radius to meters
         },
-      },
-    }).select('_id');
+      }).select('_id');
+    } else {
+      nearbySellers = await User.find({
+        'address.location': {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: coordinates,
+            },
+            $maxDistance: radius * 1000, // Convert radius to meters
+          },
+        },
+      }).select('_id');
+    }
     if (nearbySellers.length === 0) {
       return res.json({ message: 'No nearby sellers found' });
     }
     const sellerIds = nearbySellers.map(seller => seller._id);
-    // Find products from nearby sellers
+    // Find products from nearby sellers with additional filters, pagination, and limit
     const nearbyProducts = await Product.find({
       owner: { $in: sellerIds },
-    }).populate('owner', 'fName'); // Populate owner details
+      $or: [
+        { productName: { $regex: filter, $options: 'i' } },
+        { category: { $regex: filter, $options: 'i' } },
+      ],
+      price: { $gte: minPrice, $lte: maxPrice },
+    })
+      .populate('owner', 'fName')
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit);
     if (nearbyProducts.length === 0) {
       return res.json({ message: 'No products found from nearby sellers' });
     }
@@ -248,5 +276,36 @@ router.get('/nearby', passport.authenticate('jwt', { session: false }), async (r
     res.status(500).json({ message: err.message });
   }
 });
+
+
+// Refresh Access Token
+router.post('/refresh-token', async (req, res) => {
+  try {
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token is required' });
+    }
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid refresh token' });
+      }
+      const payload = {
+        _id: user._id,
+        email: user.email,
+        role: user.role
+      };
+      const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: 24 * 60 * 60, // 1 day in seconds
+      });
+      res.status(200).json({
+        accessToken: "Bearer " + accessToken,
+        expiresIn: 24 * 60 * 60 // 1 day in seconds
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

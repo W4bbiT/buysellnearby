@@ -21,7 +21,6 @@ export class ProductsService {
         console.error('Error fetching products:', error);
         throw error;
       }),
-      delay(500),
     );
   }
 
