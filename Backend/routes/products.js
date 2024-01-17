@@ -384,7 +384,7 @@ async function getProduct(req, res, next) {
     }
     try {
         const productId = req.params.pId;
-        const product = await Product.findById(productId).populate('details');
+        const product = await Product.findById(productId).populate('owner');
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }

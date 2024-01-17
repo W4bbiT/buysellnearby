@@ -15,6 +15,8 @@ export class UsersService {
   private tokenService = inject(TokenStorageService);
   private http = inject(HttpClient)
   private navCtrl = inject(NavController)
+
+
   async getProfile(): Promise<any> {
     try {
       const token = await this.tokenService.get("accessToken");
@@ -69,27 +71,11 @@ export class UsersService {
     );
   }
 
- async sendChatMessage(userId: string, sentTo:string,  message: string): Promise<any> {
-    try {
-      const token = await this.tokenService.get('accessToken');
-      const options = {
-        url: `${this.BASE_URL}/chat/send`,
-        headers: { 'Authorization': token },
-        data: { userId, sentTo, message }
-      };
-      const response: HttpResponse = await CapacitorHttp.post(options);
-      return response.data;
-    } catch (error) {
-      console.error('An error occurred:', error);
-      throw error;
-    }
-  }
-
   async getAllChatMessages(): Promise<any> {
     try {
       const token = await this.tokenService.get('accessToken');
       const options = {
-        url: `${this.BASE_URL}/chat/all`,
+        url: `http://localhost:3000/api/chat/`,
         headers: { 'Authorization': token },
       };
       const response: HttpResponse = await CapacitorHttp.get(options);
@@ -98,29 +84,6 @@ export class UsersService {
       console.error('An error occurred:', error);
       throw error;
     }
-  }
-
-  async getChatMessagesForProduct(productId: string): Promise<any> {
-    try {
-      const token = await this.tokenService.get('accessToken');
-      const options = {
-        url: `${this.BASE_URL}/chat/product/${productId}`,
-        headers: { 'Authorization': token },
-      };
-      const response: HttpResponse = await CapacitorHttp.get(options);
-      return response.data;
-    } catch (error) {
-      console.error('An error occurred:', error);
-      throw error;
-    }
-  }
-
-  setUpChat(productName: string, receiverId: string, ownerId: string): void {
-    this.navCtrl.navigateForward(['/chat', {
-      productName,
-      receiverId,
-      ownerId
-    }]);
   }
 
   private handleError(error: any): Observable<never> {

@@ -1,15 +1,25 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Chats</ion-title>
+    <ion-title>Chat Window</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-list>
-    @for (item of allChat; track $index) {
-      <ion-item>
-        <ion-label>{{ message.sender }}: {{ message.message }}</ion-label>
-      </ion-item>
+<ion-content class="ion-padding">
+    @for(message of chatMessages; track $index){
+        <p>{{ message.sender }}: {{ message.message }}</p>
     }
-  </ion-list>
+    <div>
+      <h2>Send a Message</h2>
+      <div>
+        <label for="recipientId">Recipient ID:</label>
+        <input type="text" id="recipientId" [(ngModel)]="recipientId" placeholder="Enter recipient ID">
+      </div>
+      <div>
+        <label for="message">Message:</label>
+        <textarea id="message" [(ngModel)]="message" placeholder="Type your message"></textarea>
+      </div>
+      <div>
+        <button (click)="sendMessage()">Send Message</button>
+      </div>
+    </div>
 </ion-content>

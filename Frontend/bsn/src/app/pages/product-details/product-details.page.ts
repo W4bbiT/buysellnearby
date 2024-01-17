@@ -21,13 +21,12 @@ import { UserApi } from 'src/app/models/user';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class ProductDetailsPage implements AfterViewInit {
-
   private productService = inject(ProductsService);
   public imageBaseURL = 'http://localhost:3000/';
   public product: WritableSignal<Product | null> = signal(null);
   @ViewChild("swiperEx") swiperEx?: ElementRef<{ swiper: Swiper }>;
   public isLoading: boolean = true;
-  error =  '';
+  error = '';
   private userService = inject(UsersService)
   public navCtrl = inject(NavController)
   @Input()
@@ -44,23 +43,11 @@ export class ProductDetailsPage implements AfterViewInit {
 
   constructor() { }
 
-  onSlideChange(){
+  onSlideChange() {
     console.log(this.swiperEx?.nativeElement.swiper.activeIndex);
   }
 
-  async setupChat(productName: string, ownerId: string, ){
-    this.isLoading = true;
-    this.error = "null";
-    try {
-      const loggedInUser = await this.userService.getProfile();
-      const userId = loggedInUser._id
-      const response = this.userService.setUpChat(productName, userId, ownerId);
-      console.log('Message sent successfully:', response);
-    } catch (error) {
-      console.error('Error message:', error);
-      this.error = 'Failed.';
-    } finally {
-      this.isLoading = false;
-    }
+  goToChat(productName: string, owner: string) {
+    
   }
 }

@@ -9,6 +9,11 @@ import { environment } from './environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 
 import { IonicStorageModule } from '@ionic/storage-angular'; 
+import { WebSocketService } from './app/services/web-socket.service';
+import { AuthService } from './app/services/auth.service';
+import { TokenStorageService } from './app/services/token-storage.service';
+import { UsersService } from './app/services/users.service';
+import { ProductsService } from './app/services/products.service';
 
 if (environment.production) {
   enableProdMode();
@@ -19,9 +24,14 @@ bootstrapApplication(AppComponent, {
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
     importProvidersFrom(
-      IonicStorageModule.forRoot()
+      IonicStorageModule.forRoot(),
     ),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(),
+    WebSocketService,
+    AuthService,
+    TokenStorageService,
+    UsersService,
+    ProductsService
   ],
 });

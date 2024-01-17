@@ -48,25 +48,28 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/product-details/product-details.page').then( m => m.ProductDetailsPage)
   },
   {
-    path: 'chats',
+    path: 'chat/:userId',
     loadComponent: () => import('./pages/chats/chats.page').then( m => m.ChatsPage),
     canActivate: [AuthGuard]
   },
   {
-    path: 'chat/:userId',
+    path: 'chat',
     loadComponent: () => import('./pages/chat-list/chat-list.page').then( m => m.ChatListPage),
     canActivate: [AuthGuard]
   },
   {
     path: 'edit-profile',
-    loadComponent: () => import('./pages/edit-profile/edit-profile.page').then( m => m.EditProfilePage)
+    loadComponent: () => import('./pages/edit-profile/edit-profile.page').then( m => m.EditProfilePage),
+    canActivate: [AuthGuard]
   },
   {
     path: 'add-product',
-    loadComponent: () => import('./pages/add-product/add-product.page').then( m => m.AddProductPage)
+    loadComponent: () => import('./pages/add-product/add-product.page').then( m => m.AddProductPage),
+    canActivate: [AuthGuard]
   },
   {
-    path: 'edit-product',
-    loadComponent: () => import('./pages/edit-product/edit-product.page').then( m => m.EditProductPage)
+    path: 'edit-product/:productId',
+    loadComponent: () => import('./pages/edit-product/edit-product.page').then( m => m.EditProductPage),
+    canActivate: [AuthGuard]
   },
 ];

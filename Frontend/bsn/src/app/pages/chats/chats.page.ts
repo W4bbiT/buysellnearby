@@ -1,10 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { UsersService } from 'src/app/services/users.service';
-import { Chat } from 'src/app/models/chat';
-import { ActivatedRoute, Router } from '@angular/router';
+import { WebSocketService } from 'src/app/services/web-socket.service';
 
 @Component({
   selector: 'app-chats',
@@ -14,56 +12,34 @@ import { ActivatedRoute, Router } from '@angular/router';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class ChatsPage implements OnInit {
+  recipientId: string = '';
+  message: string = '';
+  senderId: string = ''; 
+  chatMessages: any[] = [];
+  constructor(private socketService: WebSocketService) { }
 
-  private userService = inject(UsersService);
-  allChat: Chat[] = [];
+  ngOnInit(): void {
+    this.socketService.onNewMessage().subscribe((data: any) => {
+      console.log('New message:', data.message);
+      if (data.message.receiver === this.senderId) {
+        this.chatMessages.push({ sender: data.message.sender, message: data.message.message });
+      }
+    });
 
-  message: {
-    sender: string;
-    message: string;
-  } = { sender: '', message: '' };
-
-  productName: string = '';
-  receiverId: string = '';
-  productId: string = '';
-  ownerId: string = '';
-
-  isLoading: boolean = false;
-  error: string | null = null;
-  public route = inject(ActivatedRoute);
-  constructor() { }
-
-  ngOnInit() {
-    this.route.params.subscribe(params => {
-      this.productName = params['productName'];
-      this.receiverId = params['receiverId'];
-      this.productId = params['productId'];
-      this.ownerId = params['ownerId'];
+    this.socketService.onMessageError().subscribe((data: any) => {
+      console.error('Error:', data.error);
     });
   }
 
-  async sendMessage(userId: string, sentTo: string, message: string) {
-    this.isLoading = true;
-    this.error = null;
-    try {
-      const response = await this.userService.sendChatMessage(userId, sentTo, message);
-      console.log('Message sent successfully:', response);
-      // Provide valid values for product and timestamp
-      const newChat: Chat = {
-        sender: userId,
-        receiver: sentTo,
-        message,
-        timestamp: new Date(),
-        ownerId: this.ownerId,
-        product: this.productId
-      };
-      this.allChat.push(newChat);
-    } catch (error) {
-      console.error('Error message:', error);
-      this.error = 'Failed.';
-    } finally {
-      this.isLoading = false;
-    }
+  sendMessage(): void {
+    const data = { recipient: this.recipientId, message: this.message };
+    this.socketService.sendMessage(data);
+    console.log(data);
+    this.chatMessages.push({ sender: 'You', message: this.message });
+    this.message = '';
   }
 
+  ngOnDestroy(): void {
+    this.socketService.disconnect();
+  }
 }

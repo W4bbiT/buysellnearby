@@ -1,10 +1,9 @@
 import { Product } from "./product";
 
 export interface Chat{
+    _id: string,
     sender: string,
     receiver: string,
-    ownerId: string;
-    product: string,
     message: string,
     timestamp: Date,
   }

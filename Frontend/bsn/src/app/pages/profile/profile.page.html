@@ -5,11 +5,10 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-button (click)="onSignOut()">Sign Out</ion-button>
   @if(profileData){
   <ion-card>
-    <div class="avatar">
-    <ion-img [src]="'http://localhost:3000/' + profileData.profileImage" alt="Profile Image"></ion-img>
+    <div>
+    <ion-img class="rounded-full" [src]="'http://localhost:3000/' + profileData.profileImage" alt="Profile Image"></ion-img>
     </div>
     <ion-card-header>
       <ion-card-subtitle>{{ profileData.fName }} {{ profileData.lName }}</ion-card-subtitle>

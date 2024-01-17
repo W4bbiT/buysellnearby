@@ -42,7 +42,7 @@ export class HomePage {
       this.isLoading = true;
     }
     console.log(this.authService.isAuthenticated.value);
-    if(this.authService.isAuthenticated.value){
+    if (this.authService.isAuthenticated.value) {
       this.userService.findNearbyProducts().pipe(
         finalize(() => {
           this.isLoading = false;
@@ -51,8 +51,7 @@ export class HomePage {
           }
         }),
         catchError((err: any) => {
-          console.log(err);
-          this.error = err.error.status_message;
+          this.handleError(err);
           return [];
         })
       ).subscribe({
@@ -63,8 +62,8 @@ export class HomePage {
             event.target.disabled = true;
           }
         }
-      })
-    }else{
+      });
+    } else {
       this.productService.getAllProducts().pipe(
         finalize(() => {
           this.isLoading = false;
@@ -73,20 +72,26 @@ export class HomePage {
           }
         }),
         catchError((err: any) => {
-          console.log(err);
-          this.error = err.error.status_message;
+          this.handleError(err);
           return [];
         })
       ).subscribe({
         next: (res) => {
           console.log(res);
+          // Check if 'res' has 'products' property
           this.products = res.products;
           if (event) {
             event.target.disabled = true;
           }
         }
-      })
+      });
     }
+  }
+  
+
+  private handleError(error: any) {
+    this.error = error?.error?.status_message || 'An unexpected error occurred.';
+    // You can add additional logic here to handle the error as needed
   }
 
   loadMore(event: InfiniteScrollCustomEvent) {

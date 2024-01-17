@@ -9,6 +9,7 @@ opts.secretOrKey = process.env.ACCESS_TOKEN_SECRET;
 
 passport.use(new JwtStrategy(opts, async (jwt_payload, done) => {
   try {
+    console.log('JWT Payload:', jwt_payload);
     const user = await User.findById(jwt_payload._id);
     if (user) {
       return done(null, user);
@@ -19,7 +20,6 @@ passport.use(new JwtStrategy(opts, async (jwt_payload, done) => {
     return done(err, false);
   }
 }));
-
 // Refresh token strategy
 const optsRefresh = {};
 optsRefresh.jwtFromRequest = ExtractJwt.fromBodyField('refreshToken');
@@ -37,4 +37,3 @@ passport.use('refresh', new JwtStrategy(optsRefresh, async (jwt_payload, done) =
     return done(err, false);
   }
 }));
-
