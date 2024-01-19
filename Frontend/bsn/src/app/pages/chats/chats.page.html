@@ -5,21 +5,25 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-    @for(message of chatMessages; track $index){
-        <p>{{ message.sender }}: {{ message.message }}</p>
-    }
-    <div>
-      <h2>Send a Message</h2>
-      <div>
-        <label for="recipientId">Recipient ID:</label>
-        <input type="text" id="recipientId" [(ngModel)]="recipientId" placeholder="Enter recipient ID">
-      </div>
-      <div>
-        <label for="message">Message:</label>
-        <textarea id="message" [(ngModel)]="message" placeholder="Type your message"></textarea>
-      </div>
-      <div>
-        <button (click)="sendMessage()">Send Message</button>
-      </div>
+  <ng-container *ngFor="let message of chatMessages">
+    <div class="message" [ngClass]="{'sent': message.sender === 'You', 'received': message.sender !== 'You'}">
+      <p>{{ message.sender }}:</p>
+      <p>{{ message.message }}</p>
     </div>
+  </ng-container>
+
+  <div class="message-box">
+    <h2>Send a Message</h2>
+    <div class="form-group">
+      <ion-label for="recipientId">Recipient ID:</ion-label>
+      <ion-input type="text" id="recipientId" [(ngModel)]="recipientId" placeholder="Enter recipient ID"></ion-input>
+    </div>
+    <div class="form-group">
+      <ion-label for="message">Message:</ion-label>
+      <ion-textarea id="message" [(ngModel)]="message" placeholder="Type your message"></ion-textarea>
+    </div>
+    <div class="form-group">
+      <ion-button (click)="sendMessage()" expand="full">Send Message</ion-button>
+    </div>
+  </div>
 </ion-content>

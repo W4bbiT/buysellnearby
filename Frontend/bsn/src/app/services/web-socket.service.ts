@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { Chat } from '../models/chat';
-import { io } from 'socket.io-client'
-import { Observable } from 'rxjs';
+import { io } from "socket.io-client";
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { TokenStorageService } from './token-storage.service';
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketService {
-  private socket: any;
-  private token: any;
   private tokenService = inject(TokenStorageService)
+  public message$: BehaviorSubject<string> = new BehaviorSubject('');
+  private socket: any;
+  private token: string = "";
   constructor() {
     this.tokenService.get('accessToken').then(token => {
       this.token = token;
@@ -31,23 +31,24 @@ export class WebSocketService {
   }
 
   // Function to listen for new messages
-  onNewMessage(): Observable<any> {
-    return new Observable(observer => {
-      // Check if the socket is initialized before using the 'on' method
-      if (this.socket) {
-        this.socket.on('newMessage', (data: any) => observer.next(data));
-      }
-    });
+  getMessage() {
+    if (this.socket) {
+      this.socket.on('newMessage', (data: any) => {
+        this.message$.next(data);
+        console.log(data);
+      });
+    }
+    return this.message$.asObservable();
   }
 
   // Function to handle errors
   onMessageError(): Observable<any> {
-    return new Observable(observer => {
+    return new Observable(subscribe => {
       // Check if the socket is initialized before using the 'on' method
       if (this.socket) {
         this.socket.on('messageError', (data: any) => {
-          observer.next(data),
-            console.log(data);
+          subscribe.next(data);
+          console.log(data);
         });
       }
     });
@@ -57,6 +58,11 @@ export class WebSocketService {
   disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();
+    }
+  }
+  joinRoom(userId: string): void {
+    if (this.socket) {
+      this.socket.emit('joinRoom', userId);
     }
   }
 }

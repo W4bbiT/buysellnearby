@@ -85,6 +85,24 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   }
 });
 
+router.get('/:senderId/:recipientId', async (req, res) => {
+  try {
+    const { senderId, recipientId } = req.params;
+    // Fetch chat messages from the database based on sender and recipient
+    const chatHistory = await ChatMessage.find({
+      $or: [
+        { sender: senderId, receiver: recipientId },
+        { sender: recipientId, receiver: senderId }
+      ]
+    }).sort({ timestamp: 1 });
+    res.json(chatHistory);
+  } catch (error) {
+    console.error('Error fetching chat history:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 // Get chat messages for a product
 // router.get('/product/:productId', passport.authenticate('jwt', { session: false }), async (req, res) => {
 //   try {

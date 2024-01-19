@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { Chat } from 'src/app/models/chat';
 import { UsersService } from 'src/app/services/users.service';
+import { WebSocketService } from 'src/app/services/web-socket.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-chat-list',
@@ -14,6 +16,8 @@ import { UsersService } from 'src/app/services/users.service';
 })
 export class ChatListPage implements OnInit {
   userService = inject(UsersService)
+  wsService = inject(WebSocketService)
+  router = inject(Router)
   chats: Chat[] = [];
 
   constructor() { }
@@ -30,4 +34,15 @@ export class ChatListPage implements OnInit {
       console.log("Empty");
     }
   }
+
+  joinChat(receiver: string) {
+    try {
+      this.wsService.joinRoom(receiver);
+      this.router.navigate(['/chat', receiver]);
+    } catch (error) {
+      console.error('Error joining chat:', error);
+      // You can add further error handling or display a message to the user
+    }
+  }
+  
 }

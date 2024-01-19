@@ -1,15 +1,25 @@
-page-chats {
-    .scroll-content {
-      padding: 0;
-    }
-  
-    ion-list {
-      margin: 0;
-    }
-  
-    ion-item {
-      background-color: #ffffff;
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-  }
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 70%;
+}
+
+.sent {
+  background-color: #2ecc71;
+  color: #fff;
+  align-self: flex-end;
+}
+
+.received {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.message-box {
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
