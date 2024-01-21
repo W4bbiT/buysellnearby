@@ -1,5 +1,3 @@
-import { Product } from "./product";
-
 export interface Chat{
     _id: string,
     sender: string,

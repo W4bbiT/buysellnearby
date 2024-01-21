@@ -6,6 +6,7 @@ import { Chat } from 'src/app/models/chat';
 import { UsersService } from 'src/app/services/users.service';
 import { WebSocketService } from 'src/app/services/web-socket.service';
 import { Router } from '@angular/router';
+import { DatabaseService } from 'src/app/services/database.service';
 
 @Component({
   selector: 'app-chat-list',
@@ -18,31 +19,37 @@ export class ChatListPage implements OnInit {
   userService = inject(UsersService)
   wsService = inject(WebSocketService)
   router = inject(Router)
-  chats: Chat[] = [];
-
+  dbService = inject(DatabaseService);
+  chats: any[] = [];
   constructor() { }
 
   ngOnInit() {
-    this.getAllChatByUser();
+    this.userService.getProfile().then((profile) => {
+      const userId = profile._id;
+      this.getAllChatMessages(userId);
+    });
   }
 
-  async getAllChatByUser() {
-    let res = await this.userService.getAllChatMessages();
-    this.chats = res;
-    console.log(this.chats);
-    if(!this.chats){
-      console.log("Empty");
+  async getAllChatMessages(userId: string): Promise<void> {
+    try {
+      const chatList = await this.dbService.getChatList(userId);  
+      // Ensure chatList is an array before assigning
+      if (Array.isArray(chatList)) {
+        this.chats = chatList;
+      } else {
+        console.error('Invalid chat list format:', chatList);
+      }
+    } catch (error) {
+      console.error('Error getting chat list:', error);
     }
   }
 
   joinChat(receiver: string) {
     try {
-      this.wsService.joinRoom(receiver);
+      this.wsService.sendMessage({ recipient: receiver, message: '' });
       this.router.navigate(['/chat', receiver]);
     } catch (error) {
-      console.error('Error joining chat:', error);
-      // You can add further error handling or display a message to the user
+      console.error('Error starting chat:', error);
     }
   }
-  
 }

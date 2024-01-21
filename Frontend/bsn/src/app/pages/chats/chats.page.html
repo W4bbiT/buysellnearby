@@ -7,8 +7,8 @@
 <ion-content class="ion-padding">
   <ng-container *ngFor="let message of chatMessages">
     <div class="message" [ngClass]="{'sent': message.sender === 'You', 'received': message.sender !== 'You'}">
-      <p>{{ message.sender }}:</p>
-      <p>{{ message.message }}</p>
+      <p class="sender">{{ message.sender }}:</p>
+      <p class="message-body">{{ message.message }}</p>
     </div>
   </ng-container>
 
