@@ -1,4 +1,6 @@
 //userRoute.js
+const { S3Client } = require("@aws-sdk/client-s3");
+
 require('dotenv').config();
 
 const express = require('express');
@@ -9,10 +11,25 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const Product = require('../models/products');
 
+
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path')
 const multer = require('multer');
+
+const bName = process.env.BUCKET_NAME
+const bRegion = process.env.BUCKET_REGION
+const bAccessKey = process.env.BUCKET_ACCESS_KEY
+const bSecret = process.env.BUCKET_SECRET_ACCESS_KEY
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: bAccessKey,
+    secretAccessKey: bSecret,
+  },
+  region: bRegion,
+})
+
 
 const storage = multer.memoryStorage();
 
@@ -194,9 +211,29 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       fs.mkdirSync(directory, { recursive: true });
     }
     if (req.file) {
-      const path = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
-      await sharp(req.file.buffer).resize(300, 300).toFile(path);
-      req.user.profileImage = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
+      // path = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
+      // Optimize the image using Sharp
+      const optimizedImageBuffer = await sharp(req.file.buffer)
+        .resize(300, 300) // Adjust the dimensions as needed
+        .toBuffer();
+
+      // Upload the optimized image to S3
+      const s3Params = {
+        Bucket: bName,
+        Key: `profileImages/${req.user._id}.${req.file.mimetype.split('/')[1]}`,
+        Body: optimizedImageBuffer,
+        ContentType: req.file.mimetype,
+      };
+
+      const uploadResult = await s3.send(new PutObjectCommand(s3Params));
+
+      if (uploadResult) {
+        // Store the S3 path in MongoDB
+        req.user.profileImage = `https://${bName}.s3.${bRegion}.amazonaws.com/profileImages/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
+      } else {
+        return res.status(500).json({ message: 'Failed to upload optimized image to S3' });
+      }
+
     }
     const updatedUser = await req.user.save();
     console.log(updatedUser);
