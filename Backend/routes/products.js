@@ -284,11 +284,10 @@ router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate(
 });
 
 // New route to delete a specific image from a product
-router.delete('/delete-image/:productId/:imageId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.delete('/delete-image/:pId/:imageId', passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
     try {
-        const { user } = req;
-        const { productId, imageId } = req.params;
-        const product = await Product.findOne({ _id: productId, owner: user._id });
+        const { imageId } = req.params;
+        const product = res.product;
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
