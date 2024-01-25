@@ -157,35 +157,35 @@ router.post('/create', upload.array('productImages'), passport.authenticate('jwt
             details,
             owner: req.user._id,
         });
-        // Process and save multiple images
+        // Process and save multiple images to S3 with sharp
+        const totalImageCount = req.files.length;
+        if (totalImageCount > 5) {
+            throw new Error('Cannot upload more than 5 images per product.');
+        }
         if (req.files && req.files.length > 0) {
-            const directory = `./uploads/productImage/${req.user._id}`;
-            if (!fs.existsSync(directory)) {
-                fs.mkdirSync(directory, { recursive: true });
-            }
             // Create an array to store processed images
             const processedImages = [];
             for (let index = 0; index < req.files.length; index++) {
                 const file = req.files[index];
                 const imageExtension = file.originalname.split('.').pop();
-                const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
-                if (file.size > 2 * 1024 * 1024) {
-                    // Use sharp's asynchronous methods
-                    const resizedImage = await sharp(file.buffer)
-                        .resize({ width: 800 }) // Adjust the width as needed
-                        .toBuffer();
-                    // Write the resized buffer to the file
-                    fs.writeFileSync(imagePath, resizedImage);
-                    processedImages.push({ path: imagePath });
-                } else {
-                    // Write the original buffer to the file
-                    fs.writeFileSync(imagePath, file.buffer);
-                    processedImages.push({ path: imagePath });
+                const imageName = `${product._id}/${index + 1}.${imageExtension}`;
+                const s3Params = {
+                    Bucket: process.env.BUCKET_NAME,
+                    Key: `productImages/${user._id}/${imageName}`,
+                    Body: await sharp(file.buffer).resize({ width: 800 }).toBuffer(), // Use sharp for resizing
+                    ContentType: file.mimetype,
+                };
+                // Upload image to S3
+                try {
+                    await s3.send(new PutObjectCommand(s3Params));
+                    processedImages.push({
+                        path: `https://${process.env.BUCKET_NAME}.s3.${process.env.BUCKET_REGION}.amazonaws.com/productImages/${user._id}/${imageName}`,
+                    });
+                } catch (uploadError) {
+                    // Handle S3 upload error
+                    console.error('S3 Upload Error:', uploadError.message);
+                    throw new Error('Error uploading image to S3');
                 }
-            }
-            // Check if the number of processed images exceeds 5
-            if (processedImages.length > 5) {
-                return res.status(400).json({ message: 'Cannot upload more than 5 images per product.' });
             }
             // Store the processed images in the productImages array
             product.productImages = processedImages.map(({ path }) => ({ path }));
@@ -193,9 +193,11 @@ router.post('/create', upload.array('productImages'), passport.authenticate('jwt
         const newProduct = await product.save();
         res.status(201).json(newProduct);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        console.error('Create Product Error:', err.message);
+        res.status(400).json({ message: 'Error creating product', error: err.message });
     }
 });
+
 
 // Middleware to process and save product images to S3
 async function processAndSaveProductImages(files, product, user, deletedImages) {
@@ -282,78 +284,66 @@ router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate(
 });
 
 // New route to delete a specific image from a product
-router.delete('/delete-image/:productId/:imageIndex', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.delete('/delete-image/:productId/:imageId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { user } = req;
-        const { productId, imageIndex } = req.params;
+        const { productId, imageId } = req.params;
         const product = await Product.findOne({ _id: productId, owner: user._id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
+        // Find the image by ID in the productImages array
+        const image = product.productImages.find(img => img.id === imageId);
+        if (!image || !image.path) {
+            return res.status(404).json({ message: 'Image not found in the productImages array' });
+        }
         // Delete the image file from S3
-        await deleteProductImageS3(user._id, productId, imageIndex, product.productImages);
-        // Remove the image from the productImages array in the database
-        product.productImages.splice(imageIndex, 1);
-        await product.save();
-        res.json({ message: 'Image deleted successfully' });
+        const isS3DeletionSuccessful = await deleteProductImageS3(image.path);
+        if (isS3DeletionSuccessful) {
+            // Remove the image from the productImages array in the database
+            product.productImages = product.productImages.filter(img => img.id !== imageId);
+            await product.save();
+            res.json({ message: 'Image deleted successfully' });
+        } else {
+            res.status(500).json({ message: 'Error deleting image from S3' });
+        }
     } catch (error) {
         res.status(500).json({ message: 'Error deleting image', error: error.message });
     }
 });
 
-async function deleteProductImageS3(userId, productId, imageIndex, productImages) {
+async function deleteProductImageS3(imagePath) {
     try {
-        if (!productImages || productImages.length === 0 || imageIndex < 0 || imageIndex >= productImages.length) {
-            console.log(`Image not found in productImages array. Index: ${imageIndex}`);
-            return;
-        }
-        const image = productImages[imageIndex];
-        if (!image || !image.path) {
-            console.log(`Image or path is undefined. Index: ${imageIndex}`);
-            return;
-        }
-        const imageExtension = image.path.split('.').pop();
-        const s3Key = `productImages/${userId}/${productId}/${imageIndex + 1}.${imageExtension}`;
-        // Check if the object exists in S3
-        const headObjectParams = {
-            Bucket: process.env.BUCKET_NAME,
-            Key: s3Key,
-        };
-        try {
-            await s3.send(new HeadObjectCommand(headObjectParams));
-        } catch (error) {
-            // If HeadObjectCommand throws an error, the object does not exist
-            console.log(`Image not found in S3. Key: ${s3Key}`);
-            return;
-        }
-        // If the image exists in S3, proceed with deletion
+        const s3Key = imagePath.substring(imagePath.indexOf('productImages'));
+        // Delete the image object from S3
         const deleteObjectParams = {
             Bucket: process.env.BUCKET_NAME,
             Key: s3Key,
         };
+        // Proceed with deletion
         const response = await s3.send(new DeleteObjectCommand(deleteObjectParams));
         console.log('S3 Delete Response:', response);
-        // You can add additional logic here to handle the response as needed
+        // Check if the deletion was successful
+        return response && response.$metadata.httpStatusCode === 204;
     } catch (error) {
         console.error(`Error deleting image from S3: ${error.message}`);
-        throw error;
+        return false;
     }
 }
 
 // Delete a product (accessible only by the owner)
 router.delete('/delete/:pId', passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
     try {
-        const { user } = req.user;
+        const { user } = req;
         const productId = req.params.pId;
         const product = await Product.findOneAndDelete({ _id: productId, owner: user._id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        // Delete associated images from the database
-        // Delete associated images from the database and file system
+        // Delete associated images from the S3 bucket
         if (product.productImages && product.productImages.length > 0) {
-            for (let index = 0; index < product.productImages.length; index++) {
-                await deleteProductImage(user._id, productId, index, product);
+            for (const image of product.productImages) {
+                await deleteProductImageS3(image.path);
             }
         }
         res.json({ message: 'Product deleted successfully' });
