@@ -1,15 +1,14 @@
 // productRoutes.js
 const express = require('express');
-const mongoose = require('mongoose');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const router = express.Router();
 const Product = require('../models/products');
 const { validationResult } = require('express-validator');
 const passport = require('passport');
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const sharp = require('sharp');
+
 // Multer configuration
 const storage = multer.memoryStorage();
 const filter = (req, file, callback) => {
@@ -25,6 +24,13 @@ const upload = multer({
     fileFilter: filter
 });
 
+const s3 = new S3Client({
+    credentials: {
+        accessKeyId: process.env.BUCKET_ACCESS_KEY,
+        secretAccessKey: process.env.BUCKET_SECRET_ACCESS_KEY,
+    },
+    region: process.env.BUCKET_REGION,
+});
 // Get all products with pagination
 router.get('/', async (req, res) => {
     try {
@@ -191,6 +197,7 @@ router.post('/create', upload.array('productImages'), passport.authenticate('jwt
     }
 });
 
+// Middleware to process and save product images to S3
 async function processAndSaveProductImages(files, product, user, deletedImages) {
     try {
         // Ensure the product has a valid productImages array
@@ -200,25 +207,9 @@ async function processAndSaveProductImages(files, product, user, deletedImages) 
         // Remove deleted images from the productImages array
         if (deletedImages && deletedImages.length > 0) {
             product.productImages = product.productImages.filter((image, index) => !deletedImages.includes(index));
-            // Delete old images from the server
-            const deletedIndex = deletedImages[0]; // Assuming deletedImages is an array
-            const imageExtension = product.productImages[deletedIndex].path.split('.').pop();
-            const deletedImagePath = `./uploads/productImage/${user._id.toString()}/${product._id}_${deletedIndex + 1}.${imageExtension}`;
-            try {
-                if (fs.existsSync(deletedImagePath)) {
-                    await new Promise((resolve, reject) => {
-                        fs.unlink(deletedImagePath, (error) => {
-                            if (error) {
-                                console.error(`Error deleting image: ${deletedImagePath}`, error);
-                                reject(error);
-                            } else {
-                                resolve();
-                            }
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error(`Error deleting image: ${deletedImagePath}`, error);
+            // Delete old images from S3
+            for (const deletedIndex of deletedImages) {
+                await deleteProductImageS3(user._id, product._id, deletedIndex);
             }
         }
         // Ensure that the total number of images doesn't exceed the limit (5)
@@ -226,35 +217,26 @@ async function processAndSaveProductImages(files, product, user, deletedImages) 
         if (totalImageCount > 5) {
             throw new Error('Cannot upload more than 5 images per product.');
         }
-        // Process and save new images
-        const directory = `./uploads/productImage/${user._id}`;
-        if (!fs.existsSync(directory)) {
-            fs.mkdirSync(directory, { recursive: true });
-        }
+        // Process and save new images to S3
         const processedImages = [];
         for (let index = 0; index < files.length; index++) {
             const file = files[index];
             const imageExtension = file.originalname.split('.').pop();
-            const imagePath = `${directory}/${product._id}_${index + 1}.${imageExtension}`;
-            if (file.size > 2 * 1024 * 1024) {
-                // Use sharp's asynchronous methods
-                const resizedImage = await sharp(file.buffer)
-                    .resize({ width: 800 }) // Adjust the width as needed
-                    .toBuffer();
-                // Write the resized buffer to the file
-                fs.writeFileSync(imagePath, resizedImage);
-                processedImages.push({ path: imagePath });
-            } else {
-                // Write the original buffer to the file
-                fs.writeFileSync(imagePath, file.buffer);
-                processedImages.push({ path: imagePath });
-            }
+            const imageName = `${product._id}/${index + 1}.${imageExtension}`;
+            const s3Params = {
+                Bucket: process.env.BUCKET_NAME,
+                Key: `productImages/${user._id}/${imageName}`,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
+            // Upload image to S3
+            await s3.send(new PutObjectCommand(s3Params));
+            processedImages.push({
+                path: `https://${process.env.BUCKET_NAME}.s3.${process.env.BUCKET_REGION}.amazonaws.com/productImages/${user._id}/${imageName}`,
+            });
         }
         // Store the processed images in the productImages array
         product.productImages = [...product.productImages, ...processedImages];
-        // Save the updated product with new images
-        const updatedProduct = await product.save();
-        return updatedProduct;
     } catch (error) {
         throw error;
     }
@@ -299,45 +281,17 @@ router.patch('/edit/:pId', upload.array('productImages'), passport.authenticate(
     }
 });
 
-// Add this function to your routes file
-const deleteProductImage = async (userId, productId, imageIndex, product) => {
-    try {
-        const image = product.productImages[imageIndex];
-        const imagePath = `${image.path}`; // Add a dot at the beginning to make it a relative path
-        console.log('Deleting image at path:', imagePath);
-        // Check if the file exists before attempting to delete
-        const fileExists = await fs.promises.access(imagePath)
-            .then(() => true)
-            .catch(() => false);
-        if (fileExists) {
-            // Delete the image file
-            await fs.promises.unlink(imagePath);          
-            // Optional: Remove the image entry from the productImages array
-            product.productImages.splice(imageIndex, 1);
-            await product.save();        
-            console.log(`Image deleted successfully: ${imagePath}`);
-        } else {
-            console.log(`File not found: ${imagePath}`);
-            // Handle the case where the file doesn't exist
-        }
-    } catch (error) {
-        console.error(`Error deleting image: ${error.message}`);
-        throw error;
-    }
-};
-
 // New route to delete a specific image from a product
 router.delete('/delete-image/:productId/:imageIndex', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const { user } = req;
         const { productId, imageIndex } = req.params;
-        // Retrieve the product from the database
         const product = await Product.findOne({ _id: productId, owner: user._id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        // Delete the image file
-        await deleteProductImage(user._id, productId, imageIndex, product);
+        // Delete the image file from S3
+        await deleteProductImageS3(user._id, productId, imageIndex, product.productImages);
         // Remove the image from the productImages array in the database
         product.productImages.splice(imageIndex, 1);
         await product.save();
@@ -347,10 +301,49 @@ router.delete('/delete-image/:productId/:imageIndex', passport.authenticate('jwt
     }
 });
 
+async function deleteProductImageS3(userId, productId, imageIndex, productImages) {
+    try {
+        if (!productImages || productImages.length === 0 || imageIndex < 0 || imageIndex >= productImages.length) {
+            console.log(`Image not found in productImages array. Index: ${imageIndex}`);
+            return;
+        }
+        const image = productImages[imageIndex];
+        if (!image || !image.path) {
+            console.log(`Image or path is undefined. Index: ${imageIndex}`);
+            return;
+        }
+        const imageExtension = image.path.split('.').pop();
+        const s3Key = `productImages/${userId}/${productId}/${imageIndex + 1}.${imageExtension}`;
+        // Check if the object exists in S3
+        const headObjectParams = {
+            Bucket: process.env.BUCKET_NAME,
+            Key: s3Key,
+        };
+        try {
+            await s3.send(new HeadObjectCommand(headObjectParams));
+        } catch (error) {
+            // If HeadObjectCommand throws an error, the object does not exist
+            console.log(`Image not found in S3. Key: ${s3Key}`);
+            return;
+        }
+        // If the image exists in S3, proceed with deletion
+        const deleteObjectParams = {
+            Bucket: process.env.BUCKET_NAME,
+            Key: s3Key,
+        };
+        const response = await s3.send(new DeleteObjectCommand(deleteObjectParams));
+        console.log('S3 Delete Response:', response);
+        // You can add additional logic here to handle the response as needed
+    } catch (error) {
+        console.error(`Error deleting image from S3: ${error.message}`);
+        throw error;
+    }
+}
+
 // Delete a product (accessible only by the owner)
 router.delete('/delete/:pId', passport.authenticate('jwt', { session: false }), checkProductOwnership, async (req, res) => {
     try {
-        const { user } = req;
+        const { user } = req.user;
         const productId = req.params.pId;
         const product = await Product.findOneAndDelete({ _id: productId, owner: user._id });
         if (!product) {
@@ -369,6 +362,22 @@ router.delete('/delete/:pId', passport.authenticate('jwt', { session: false }), 
     }
 });
 
+router.get('/user-products/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    try {
+        // Use the static method from the Product model to retrieve paginated user-specific products
+        const userProducts = await Product.find({owner: userId})
+        .skip(skip)
+        .limit(limit)
+        .sort('-createdOn')
+        res.json(userProducts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving paginated user products', error: error.message });
+    }
+});
 
 // Error handling middleware
 router.use((err, req, res, next) => {

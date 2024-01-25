@@ -1,6 +1,5 @@
 //userRoute.js
-const { S3Client } = require("@aws-sdk/client-s3");
-
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 require('dotenv').config();
 
 const express = require('express');
@@ -10,7 +9,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const Product = require('../models/products');
-
 
 const sharp = require('sharp');
 const fs = require('fs');
@@ -29,7 +27,6 @@ const s3 = new S3Client({
   },
   region: bRegion,
 })
-
 
 const storage = multer.memoryStorage();
 
@@ -188,15 +185,12 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
     } else {
       return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
     }
-
     if (req.body.phone) {
       req.user.phone = req.body.phone;
     }
     if (req.body.email) {
       req.user.email = req.body.email;
-
       const emailExist = await User.findOne({ email: req.body.email });
-
       if (emailExist) {
         return res.send('Email already exists');
       }
@@ -216,7 +210,6 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       const optimizedImageBuffer = await sharp(req.file.buffer)
         .resize(300, 300) // Adjust the dimensions as needed
         .toBuffer();
-
       // Upload the optimized image to S3
       const s3Params = {
         Bucket: bName,
@@ -224,16 +217,14 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
         Body: optimizedImageBuffer,
         ContentType: req.file.mimetype,
       };
-
-      const uploadResult = await s3.send(new PutObjectCommand(s3Params));
-
+      const command = new PutObjectCommand(s3Params)
+      const uploadResult = await s3.send(command);
       if (uploadResult) {
         // Store the S3 path in MongoDB
         req.user.profileImage = `https://${bName}.s3.${bRegion}.amazonaws.com/profileImages/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
       } else {
         return res.status(500).json({ message: 'Failed to upload optimized image to S3' });
       }
-
     }
     const updatedUser = await req.user.save();
     console.log(updatedUser);
@@ -343,6 +334,5 @@ router.post('/refresh-token', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 
 module.exports = router;
