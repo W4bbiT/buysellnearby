@@ -4,8 +4,8 @@
 
 export const environment = {
   production: false,
-  SOCKET_ENDPOINT: 'ws://3.14.145.200:3000',
-  BACKEND_ENDPOINT: 'http://3.14.145.200:3000'  
+  SOCKET_ENDPOINT: 'ws://3.14.145.200',
+  BACKEND_ENDPOINT: 'http://3.14.145.200'  
 
 };
 
