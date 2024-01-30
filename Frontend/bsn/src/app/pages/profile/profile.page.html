@@ -8,7 +8,7 @@
   @if(profileData){
   <ion-card>
     <div>
-    <ion-img class="rounded-full" [src]="'http://localhost:3000/' + profileData.profileImage" alt="Profile Image"></ion-img>
+    <ion-img class="rounded-full" [src]="profileData.profileImage" alt="Profile Image"></ion-img>
     </div>
     <ion-card-header>
       <ion-card-subtitle>{{ profileData.fName }} {{ profileData.lName }}</ion-card-subtitle>

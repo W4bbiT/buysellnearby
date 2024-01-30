@@ -15,7 +15,7 @@
       @for (item of product.productImages; track $index) {
       <swiper-slide>
         <div class="swiper-zoom-container">
-          <img [src]="imageBaseURL + item.path" alt="Product Image" />
+          <img [src]="item.path" alt="Product Image" />
         </div>
       </swiper-slide>
       }
@@ -49,7 +49,7 @@
   </ion-card>
 
   <ion-card>
-    <ion-img [src]="'http://localhost:3000/' + product.owner.profileImage" class="w-10 h-10"></ion-img>
+    <ion-img [src]="product.owner.profileImage" class="w-10 h-10"></ion-img>
     <ion-buttons class="bg-zinc-300 text-violet-950 p-5 w-auto h-auto" (click)="goToChat(product.productName, product.owner._id)">chat</ion-buttons>
   </ion-card>
 
