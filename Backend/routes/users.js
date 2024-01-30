@@ -205,12 +205,9 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       fs.mkdirSync(directory, { recursive: true });
     }
     if (req.file) {
-      // path = `./uploads/profileImage/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
-      // Optimize the image using Sharp
       const optimizedImageBuffer = await sharp(req.file.buffer)
-        .resize(300, 300) // Adjust the dimensions as needed
+        .resize(300, 300) 
         .toBuffer();
-      // Upload the optimized image to S3
       const s3Params = {
         Bucket: bName,
         Key: `profileImages/${req.user._id}.${req.file.mimetype.split('/')[1]}`,
@@ -220,7 +217,6 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
       const command = new PutObjectCommand(s3Params)
       const uploadResult = await s3.send(command);
       if (uploadResult) {
-        // Store the S3 path in MongoDB
         req.user.profileImage = `https://${bName}.s3.${bRegion}.amazonaws.com/profileImages/${req.user._id}.${req.file.mimetype.split('/')[1]}`;
       } else {
         return res.status(500).json({ message: 'Failed to upload optimized image to S3' });
@@ -236,7 +232,6 @@ router.patch('/update-user', upload.single('profileImage'), passport.authenticat
   }
 });
 
-// Route to find product owners nearby
 router.get('/nearby', passport.authenticate('jwt', { session: false }), async (req, res) => {
   // nearby?radius=50 for a 50 km radius.
   const { coordinates } = req.user.address.location;
