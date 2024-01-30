@@ -4,14 +4,15 @@ import { Observable, catchError, delay, from, map, switchMap, throwError } from 
 import { TokenStorageService } from './token-storage.service';
 import { CapacitorHttp, HttpResponse } from '@capacitor/core';
 import { NavController } from '@ionic/angular/standalone';
+import { environment } from 'src/environments/environment';
 
+const BASE_URL = environment.BACKEND_ENDPOINT + '/api/user'
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class UsersService {
-  private BASE_URL = 'http://localhost:3000/api/user';
   private tokenService = inject(TokenStorageService);
   private http = inject(HttpClient)
   private navCtrl = inject(NavController)
@@ -25,7 +26,7 @@ export class UsersService {
         return null;
       }
       const options = {
-        url: `${this.BASE_URL}/profile`,
+        url: `${BASE_URL}/profile`,
         headers: { 'Authorization': token },
       };
       const response: HttpResponse = await CapacitorHttp.get(options);
@@ -44,7 +45,7 @@ export class UsersService {
   }
 
   updateProfile(updatedUser: any): Observable<any> {
-    const url = `${this.BASE_URL}/update-user`;
+    const url = `${BASE_URL}/update-user`;
     return this.http.patch<any>(url, updatedUser).pipe(
       catchError((error) => {
         console.error('Error editing profile:', error);
@@ -55,7 +56,7 @@ export class UsersService {
   }
 
   findNearbyProducts(radius?: number): Observable<any> {
-    const url = radius ? `${this.BASE_URL}/nearby?radius=${radius}` : `${this.BASE_URL}/nearby`;
+    const url = radius ? `${BASE_URL}/nearby?radius=${radius}` : `${BASE_URL}/nearby`;
     return from(this.tokenService.get("accessToken")).pipe(
       map(token => ({
         url,
@@ -75,7 +76,7 @@ export class UsersService {
     try {
       const token = await this.tokenService.get('accessToken');
       const options = {
-        url: `http://localhost:3000/api/chat/`,
+        url: BASE_URL + `/api/chat/`,
         headers: { 'Authorization': token },
       };
       const response: HttpResponse = await CapacitorHttp.get(options);

@@ -14,7 +14,7 @@
           @for (product of products; track product._id) {
           <ion-col button [routerLink]="['/details', product._id]">
             <ion-card>
-              <img [src]="imageBaseURL + product.productImages[0].path" />
+              <img [src]="product.productImages[0].path" />
             </ion-card>
           </ion-col>
           } @empty {

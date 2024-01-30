@@ -2,6 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { io } from "socket.io-client";
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { TokenStorageService } from './token-storage.service';
+import { environment } from 'src/environments/environment';
+
+const backendURL = environment.BACKEND_ENDPOINT;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -18,7 +22,7 @@ export class WebSocketService {
   }
 
   private initializeSocket(): void {
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(backendURL, {
       extraHeaders: {
         Authorization: this.token,
       },

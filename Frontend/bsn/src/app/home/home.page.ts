@@ -27,7 +27,6 @@ export class HomePage {
   public error = null;
   public isLoading = false;
   public products: Product[] = [];
-  public imageBaseURL = 'http://localhost:3000/';
   public dummyArray = new Array(5);
   public isLoggedIn = false
 
@@ -42,28 +41,8 @@ export class HomePage {
       this.isLoading = true;
     }
     console.log(this.authService.isAuthenticated.value);
-    if (this.authService.isAuthenticated.value) {
-      this.userService.findNearbyProducts().pipe(
-        finalize(() => {
-          this.isLoading = false;
-          if (event) {
-            event.target.complete();
-          }
-        }),
-        catchError((err: any) => {
-          this.handleError(err);
-          return [];
-        })
-      ).subscribe({
-        next: (res) => {
-          console.log(res);
-          this.products = res;
-          if (event) {
-            event.target.disabled = true;
-          }
-        }
-      });
-    } else {
+    if (this.authService.isAuthenticated.value === false) {
+
       this.productService.getAllProducts().pipe(
         finalize(() => {
           this.isLoading = false;
@@ -80,6 +59,30 @@ export class HomePage {
           console.log(res);
           // Check if 'res' has 'products' property
           this.products = res.products;
+          console.log(this.products[0].productImages[0].path);
+          if (event) {
+            event.target.disabled = true;
+          }
+        }
+      });
+
+    } else {
+
+      this.userService.findNearbyProducts().pipe(
+        finalize(() => {
+          this.isLoading = false;
+          if (event) {
+            event.target.complete();
+          }
+        }),
+        catchError((err: any) => {
+          this.handleError(err);
+          return [];
+        })
+      ).subscribe({
+        next: (res) => {
+          console.log(res);
+          this.products = res;
           if (event) {
             event.target.disabled = true;
           }

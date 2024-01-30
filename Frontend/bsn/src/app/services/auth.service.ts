@@ -5,8 +5,9 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CapacitorHttp, HttpResponse } from '@capacitor/core';
 import * as moment from 'moment';
 import { TokenStorageService } from './token-storage.service';
+import { environment } from 'src/environments/environment';
 
-const AUTH_API = 'http://localhost:3000/api/user';
+const AUTH_API = environment.BACKEND_ENDPOINT + '/api/user';
 
 @Injectable({
   providedIn: 'root'

@@ -2,14 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, delay } from 'rxjs';
 import { ApiResponse, Product } from '../models/product';
+import { environment } from 'src/environments/environment';
 
-const BASE_URL = 'http://localhost:3000/api/product'
+const BASE_URL = environment.BACKEND_ENDPOINT + '/api/product'
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductsService {
-
   private http = inject(HttpClient)
 
   constructor() { }
