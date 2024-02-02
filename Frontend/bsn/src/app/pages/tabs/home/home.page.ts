@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent, InfiniteScrollCustomEvent, IonList, IonItem, IonSkeletonText, IonAvatar, IonAlert, IonLabel, IonCard, IonCardContent, IonCardSubtitle, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonBadge, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
-import { ProductsService } from '../services/products.service';
+import { ProductsService } from '../../../services/products.service';
 import { catchError, finalize } from 'rxjs';
-import { Product } from '../models/product';
+import { Product } from '../../../models/product';
 import { CurrencyPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { UsersService } from '../services/users.service';
-import { AuthService } from '../services/auth.service';
+import { UsersService } from '../../../services/users.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-home',

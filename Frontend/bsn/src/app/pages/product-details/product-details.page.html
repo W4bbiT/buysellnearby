@@ -50,7 +50,7 @@
 
   <ion-card>
     <ion-img [src]="product.owner.profileImage" class="w-10 h-10"></ion-img>
-    <ion-buttons class="bg-zinc-300 text-violet-950 p-5 w-auto h-auto" (click)="goToChat(product.productName, product.owner._id)">chat</ion-buttons>
+    <ion-buttons class="bg-zinc-300 text-violet-950 p-5 w-auto h-auto" (click)="joinChat(product.owner._id)">chat</ion-buttons>
   </ion-card>
 
   }

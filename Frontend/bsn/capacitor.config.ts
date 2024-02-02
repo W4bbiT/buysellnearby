@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'bsn',
+  appId: 'io.azar.ansar',
+  appName: 'BuySellNearby',
   webDir: 'www/browser',
   server: {
     androidScheme: 'https'

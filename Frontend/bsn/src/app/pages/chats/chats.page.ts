@@ -20,15 +20,19 @@ export class ChatsPage implements OnInit, OnDestroy {
   senderId: string = '';
   chatMessages: any[] = [];
   userService = inject(UsersService);
+  route = inject(ActivatedRoute)
   constructor(private socketService: WebSocketService, private dbService: DatabaseService) {
   }
 
   ngOnInit(): void {
     this.userService.getProfile().then((senderProfile: any) => {
       this.senderId = senderProfile._id;
-      // Load chat history on page initialization
-      this.loadChatHistory();
-      // Subscribe to new messages
+      this.route.paramMap.subscribe(params => {
+        this.recipientId = params.get('userId')!;
+        console.log(" THIS IS THE RECEPIENT ID ", params.get('userId')!);
+        // Load chat history using the recipient ID
+        this.loadChatHistory();
+      });
       this.socketService.getMessage().subscribe((data: any) => {
         this.handleNewMessage(data);
       });
@@ -48,7 +52,7 @@ export class ChatsPage implements OnInit, OnDestroy {
     // Send the message through the WebSocketService
     this.socketService.sendMessage(data);
     // Save the message in the database
-    this.dbService.addMessage('YourUserId', this.recipientId, this.message)
+    this.dbService.addMessage(this.recipientId, this.message)
       .then(() => console.log('Message saved to the database'))
       .catch((error) => console.error('Error saving message to the database:', error));
     // Display the sent message in the chatMessages array
@@ -63,7 +67,7 @@ export class ChatsPage implements OnInit, OnDestroy {
       // Add the received message to the chatMessages array
       this.chatMessages.push({ sender: data.message.sender, message: data.message.message, timestamp: new Date() });
       // Save the received message in the database
-      this.dbService.addMessage(data.message.sender, 'YourUserId', data.message.message)
+      this.dbService.addMessage('YourUserId', data.message.message)
         .then(() => console.log('Message saved to the database'))
         .catch((error) => console.error('Error saving message to the database:', error));
     }
