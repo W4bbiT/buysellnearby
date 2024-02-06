@@ -10,24 +10,11 @@ router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 router.use(passport.initialize())
 
-const admin = "STAR"
+const admin = process.env.ADMIN_KEY
 
-
-//Gettign all users 
-router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        if (req.user.role != admin) {
-            res.send("You don't have admin acces!")
-        } else {
-            res.send("You are admin!")
-        }
-    } catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-})
 
 // Get all users with pagination
-router.get('/gau', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         if (req.user.role !== admin) {
             res.json({ message: 'You are not authorized to access this page!' });
@@ -46,121 +33,80 @@ router.get('/gau', passport.authenticate('jwt', { session: false }), async (req,
     }
 });
 
-//deleting one
-router.delete('/du', passport.authenticate('jwt', { session: false }), async (req, res) => {
+// Route to delete a user
+router.delete('/deleteuser/:userId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        if (req.user.role != admin) {
-            res.send.json({ message: 'you are not authorized to access this page!' })
-        } else {
-            await req.user.remove()
-            res.json({ message: 'User deleted!' })
+        // Check if the user is an admin
+        if (req.user.role !== admin) {
+            return res.status(403).json({ message: 'You are not authorized to access this page!' });
         }
-    }
-    catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-})
-
-//creating a product listing
-router.post('/ap', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const product = new Product({
-        productName: req.body.productName,
-        category: req.body.category,
-        price: req.body.price,
-        inStock: req.body.inStock,
-        description: req.body.description,
-        discount: req.body.discount,
-        productImage: req.body.productImage,
-        createdOn: Date.now(),
-        details: req.body.details,
-        featureProduct: req.body.featureProduct
-    })
-    try {
-        if (req.user.role != admin) {
-
-            res.send.json({ message: 'you are not authorized to access this page!' })
-        } else {
-            const newProduct = await product.save()
-            res.status(201).json(newProduct)
+        // Find the user by ID
+        const userToDelete = await User.findById(req.params.userId);
+        if (!userToDelete) {
+            return res.status(404).json({ message: 'User not found' });
         }
+        // Prevent deletion of admin users
+        if (userToDelete.role === admin) {
+            return res.status(400).json({ message: 'Cannot delete admin user' });
+        }
+        // Delete the user
+        await userToDelete.remove();
+        return res.json({ message: 'User deleted successfully' });
     } catch (err) {
-        res.status(400).json({ message: err.message })
+        return res.status(500).json({ message: err.message });
     }
-})
+});
 
-//updating a product
-router.patch('/up/:id', passport.authenticate('jwt', { session: false }), getProduct, async (req, res) => {
-    if (req.body.productName != null) {
-        res.product.productName = req.body.productName
-    }
-    if (req.body.category != null) {
-        res.product.category = req.body.category
-    }
-    if (req.body.price != null) {
-        res.product.price = req.body.price
-    }
-    if (req.body.discount != null) {
-        res.product.discount = req.body.discount
-    }
-    if (req.body.description != null) {
-        res.product.description = req.body.description
-    }
-    if (req.body.inStock != null) {
-        res.product.inStock = req.body.inStock
-    }
-    if (req.body.productImage != null) {
-        res.product.productImage = req.body.productImage
-    }
-    if (req.body.featureProduct != null) {
-        res.product.featureProduct = req.body.featureProduct
-    }
-    if (req.body.details != null) {
-        res.product.details = req.body.details
-    }
+// Route to block a user
+router.put('/blockuser/:userId', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        if (req.user.role != admin) {
-            res.send.json({ message: 'you are not authorized to access this page!' })
-        } else {
-            const updatedProduct = await res.product.save()
-            res.json(updatedProduct)
+        // Check if the user is an admin
+        if (req.user.role !== admin) {
+            return res.status(403).json({ message: 'You are not authorized to access this page!' });
         }
+        // Find the user by ID
+        const userToBlock = await User.findById(req.params.userId);
+        if (!userToBlock) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        // Prevent blocking of admin users
+        if (userToBlock.role === admin) {
+            return res.status(400).json({ message: 'Cannot block admin user' });
+        }
+        // Update the user's status to blocked
+        userToBlock.blocked = true;
+        await userToBlock.save();
+        return res.json({ message: 'User blocked successfully' });
     } catch (err) {
-        res.status(400).json({
-            message: err.message
-        })
+        return res.status(500).json({ message: err.message });
     }
-})
+});
 
-//deleting a product
-router.delete('/dp/:id', passport.authenticate('jwt', { session: false }), getProduct, async (req, res) => {
+
+// Route to delete a product
+router.delete('/deleteproduct/:id', passport.authenticate('jwt', { session: false }), getProduct, async (req, res) => {
     try {
-        if (req.user.role != admin) {
-            res.send.json({ message: 'you are not authorized to access this page!' })
-        } else {
-            await res.product.remove()
-            res.json({ message: 'Product deleted!' })
+        if (req.user.role !== admin) {
+            return res.status(403).json({ message: 'You are not authorized to access this page!' });
         }
+        await res.product.remove();
+        return res.json({ message: 'Product deleted!' });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
     }
-    catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-
-})
+});
 
 async function getProduct(req, res, next) {
-    let product
     try {
-        product = await Product.findById(req.params.id)
-        if (product == null) {
-            return res.status(404).json({ message: 'Couldn\'t find product' })
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Couldn\'t find product' });
         }
+        res.product = product;
+        next();
     } catch (err) {
-        return res.status(500).json({ message: err.message })
+        return res.status(500).json({ message: err.message });
     }
-    res.product = product
-
-    next()
 }
-
 
 module.exports = router

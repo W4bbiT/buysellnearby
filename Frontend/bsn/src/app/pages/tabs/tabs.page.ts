@@ -11,10 +11,13 @@ import { IonicModule } from '@ionic/angular';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class TabsPage implements OnInit {
-
+  selectedTab: any;
   constructor() { }
 
   ngOnInit() {
   }
 
+  setCurrentTab(event: any) {
+    this.selectedTab = event.tab;
+  }
 }

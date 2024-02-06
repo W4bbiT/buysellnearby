@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema({
             coordinates: [Number], // Longitude (1st), Latitude (2nd)
         },
     },
+    blocked: {
+        type: Boolean,
+        default: false,
+    },
     createdOn: {
         type: Date,
         default: Date.now

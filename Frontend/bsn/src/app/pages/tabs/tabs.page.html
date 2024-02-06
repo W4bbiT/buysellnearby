@@ -1,22 +1,36 @@
-<ion-tabs>
-  <ion-tab-bar slot="bottom">
-    <ion-tab-button tab="home">
+<ion-tabs #tabs (ionTabsDidChange)="setCurrentTab($event)">
+  <ion-tab-bar slot="bottom" class="bg-red-500">
+    <ion-tab-button tab="home" [ngClass]="{'selected': selectedTab == 'home'}">
       <ion-icon name="home"></ion-icon>
-      Home
+      @if (selectedTab == 'home') {
+      <ion-label>
+        Home
+      </ion-label>
+      }
     </ion-tab-button>
-    <ion-tab-button tab="chat">
+    <ion-tab-button tab="chat" [ngClass]="{'selected': selectedTab == 'chat'}">
       <ion-icon name="chatbubble-ellipses"></ion-icon>
-      Chat
+      @if (selectedTab == 'chat') {
+      <ion-label>
+        Chat
+      </ion-label>
+      }
     </ion-tab-button>
-    <ion-tab-button tab="add-product">
+    <ion-tab-button tab="add-product" [ngClass]="{'selected': selectedTab == 'add-product'}">
       <ion-icon name="add-circle"></ion-icon>
-      Add
+      @if (selectedTab == 'add-product') {
+      <ion-label>
+        Add
+      </ion-label>
+      }
     </ion-tab-button>
-    <ion-tab-button tab="profile">
+    <ion-tab-button tab="profile" [ngClass]="{'selected': selectedTab == 'profile'}">
       <ion-icon name="person-circle"></ion-icon>
-      Profile
+      @if (selectedTab == 'profile') {
+      <ion-label>
+        Profile
+      </ion-label>
+      }
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>
-
-

@@ -103,7 +103,10 @@ router.post('/signup', async (req, res) => {
         city: req.body.city,
         zipcode: req.body.zipcode,
         country: req.body.country
-      }
+      },
+      verificationToken: generateVerificationToken(),
+      // Add a field to track whether the user is verified or not
+      verified: false,
     });
     const addressString = `${req.body.zipcode}, ${req.body.country}`;
     const geoData = await getGeolocation(addressString);
@@ -117,6 +120,9 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'Invalid coordinates from geolocation data' });
     }
     const newUser = await user.save();
+    
+    await sendVerificationEmail(newUser.email, newUser.verificationToken);
+
     res.status(201).json(newUser);
   } catch (err) {
     res.status(400).json({ message: err.message });

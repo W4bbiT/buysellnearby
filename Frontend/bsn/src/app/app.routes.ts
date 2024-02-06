@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoggedInGuard } from './guards/logged-in.guard';
 import { AuthGuard } from './guards/auth.guard';
-import { AdminAuthGuard } from './guards/admin-auth.guard';
 
 export const routes: Routes = [
 
@@ -43,6 +42,6 @@ export const routes: Routes = [
   },
   {
     path: 'tabs',
-    loadChildren: () => import('./pages/tabs/tabs.page').then( m => m.TabsPage)
+    loadChildren: () => import('./pages/tabs/tabs.routes').then( m => m.routes)
   },
 ];
